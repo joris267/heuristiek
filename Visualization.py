@@ -1,5 +1,6 @@
 #C
 # GitHub test
+# GitHub test 2
 import numpy as np
 import pygame
 import sys
