@@ -1,11 +1,12 @@
 import numpy as np
-from Visualization_test_joris import *
-import data
+import data as data
 from pygame.locals import *
 
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
+
+chips = data.chips
 
 def create_grid():
     """
@@ -15,11 +16,9 @@ def create_grid():
     """
     
     grid = np.ones(shape = (X_SIZE,Y_SIZE,Z_SIZE), dtype = bool)
-    for chip in chip_list:
+    for chip in chips:
         grid[chip[0]][chip[1]][0] = False
     return grid
-
-grid = create_grid()
 
 def findShortestPath(start,end):
     """ Algorithm that finds shortest intersecting path between 2 points

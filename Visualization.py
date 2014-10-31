@@ -3,6 +3,7 @@
 import data as data
 import pygame
 import sys
+import grid
 from pygame.locals import *
 print 'imported'
 
@@ -11,6 +12,7 @@ listpoints1 = [(1, 1, 3), (1, 8, 3)]
 
 netlist = data.netlist
 chips = data.chips
+
 shortest_paths = []
 
 layer = 3  # For testing
