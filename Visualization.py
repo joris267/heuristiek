@@ -10,73 +10,73 @@ X_SIZE = 17
 Y_SIZE = 12
 Z_SIZE = 8
 
-listpoints = [(1,1,3),(6,1,3),(10,1,3),(15,1,3)] #For testing
-listpoints1 = [(1,1,3),(1,8,3)]
+listpoints = [(1, 1, 3),(6, 1, 3),(10, 1, 3),(15, 1,3 )] #For testing
+listpoints1 = [(1, 1, 3), (1, 8, 3)]
 
 shortest_paths = []
 
-chips = [(1,1,3),(6,1,3),(10,1,3),(15,1,3),
-         (3,2,3),(12,2,3),(14,2,3),
-         (12,3,3),
-         (8,4,3),
-         (1,5,3),(4,5,3),(11,5,3),(16,5,3),
+chips = [(1, 1, 3), (6, 1, 3), (10, 1, 3), (15, 1, 3),
+         (3, 2, 3), (12, 2, 3), (14, 2, 3),
+         (12, 3, 3),
+         (8, 4, 3),
+         (1, 5, 3), (4, 5, 3), (11, 5, 3), (16, 5, 3),
 
-         (13,7,3),(16,7,3),
-         (2,8,3),(6,8,3),(9,8,3),(11,8,3),(15,8,3),
-         (1,9,3),
-         (2,10,3),(9,10,3),
-         (1,11,3),(12,11,3)]
+         (13, 7, 3), (16, 7, 3),
+         (2, 8, 3), (6 ,8, 3), (9, 8, 3), (11, 8, 3), (15, 8, 3),
+         (1, 9, 3),
+         (2, 10, 3), (9, 10, 3),
+         (1, 11, 3), (12, 11, 3)]
 
-netlist = [(0,13),
-(0 , 14),
-(0 , 22),
-(1 , 7),
-(3 , 19),
-(3 , 9),
-(4 , 8),
-(4 , 9),
-(5 , 14),
-(5 , 4),
-(6 , 10),
-(6 , 17),
-(7 , 23),
-(10 , 0),
-(10 , 1),
-(10 , 18),
-(10 , 18),
-(11 , 0),
-(11 , 17),
-(11 , 3),
-(11 , 4),
-(11 , 9),
-(12 , 24),
-(13 , 4),
-(14 , 19),
-(14 , 21),
-(16 , 16),
-(16 , 23),
-(16 , 7),
-(17 , 15),
-(17 , 21),
-(17 , 9),
-(18 , 20),
-(18 , 21),
-(18 , 23),
-(18 , 5),
-(18 , 9),
-(19 , 20),
-(19 , 21),
-(20 , 6),
-(21 , 15),
-(21 , 2),
-(22 , 10),
-(22 , 11),
-(22 , 18),
-(22 , 4),
-(23 , 4),
-(23 , 5),
-(24 , 15),
-(24 , 16)]
+netlist = [(0, 13),
+(0, 14),
+(0, 22),
+(1, 7),
+(3, 19),
+(3, 9),
+(4, 8),
+(4, 9),
+(5, 14),
+(5, 4),
+(6, 10),
+(6, 17),
+(7, 23),
+(10, 0),
+(10, 1),
+(10, 18),
+(10, 18),
+(11, 0),
+(11, 17),
+(11, 3),
+(11, 4),
+(11, 9),
+(12, 24),
+(13, 4),
+(14, 19),
+(14, 21),
+(16, 16),
+(16, 23),
+(16, 7),
+(17, 15),
+(17, 21),
+(17, 9),
+(18, 20),
+(18, 21),
+(18, 23),
+(18, 5),
+(18, 9),
+(19, 20),
+(19, 21),
+(20, 6),
+(21, 15),
+(21, 2),
+(22, 10),
+(22, 11),
+(22, 18),
+(22, 4),
+(23, 4),
+(23, 5),
+(24, 15),
+(24, 16)]
 
 layer = 3  # For testing
 
@@ -95,40 +95,41 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
 class Button:
-   def __init__(self, text):
-      self.text = text
-      self.is_hover = False
-      self.default_color = (100,100,100)
-      self.hover_color = (255,255,255)
-      self.font_color = (0,0,0)
-      self.obj = None
+    def __init__(self, text):
+        self.text = text
+        self.is_hover = False
+        self.default_color = (100,100,100)
+        self.hover_color = (255,255,255)
+        self.font_color = (0,0,0)
+        self.obj = None
       
-   def label(self):
-      '''button label font'''
-      font = pygame.font.Font(None, 20)
-      return font.render(self.text, 1, self.font_color)
+    def label(self):
+        '''button label font'''
+        font = pygame.font.Font(None, 20)
+        return font.render(self.text, 1, self.font_color)
       
-   def color(self):
-      '''change color when hovering'''
-      if self.is_hover:
-         return self.hover_color
-      else:
-         return self.default_color
-         
-   def draw(self, screen, mouse, rectcoord, labelcoord):
-      '''create rect obj, draw, and change color based on input'''
-      self.obj  = pygame.draw.rect(screen, self.color(), rectcoord)
-      screen.blit(self.label(), labelcoord)
+    def color(self):
+          '''change color when hovering'''
+        if self.is_hover:
+            return self.hover_color
+        else:
+            return self.default_color
+
+    # noinspection PyUnreachableCode
+    def draw(self, screen, mouse, rectcoord, labelcoord):
+        '''create rect obj, draw, and change color based on input'''
+        self.obj  = pygame.draw.rect(screen, self.color(), rectcoord)
+        screen.blit(self.label(), labelcoord)
       
-      #change color if mouse over button
-      self.check_hover(mouse)
+        #change color if mouse over button
+        self.check_hover(mouse)
       
-   def check_hover(self, mouse):
-      '''adjust is_hover value based on mouse over button - to change hover color'''
-      if self.obj.collidepoint(mouse):
-         self.is_hover = True 
-      else:
-         self.is_hover = False
+    def check_hover(self, mouse):
+        '''adjust is_hover value based on mouse over button - to change hover color'''
+        if self.obj.collidepoint(mouse):
+        self.is_hover = True
+        else:
+            self.is_hover = False
 
 def changeLayerText(layertext):
     font = pygame.font.Font(None, 42)
