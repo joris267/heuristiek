@@ -1,5 +1,5 @@
-#C
-# GitHub test
+#C Joris
+# GitHub test 234
 import numpy as np
 import pygame
 import sys
