@@ -15,6 +15,10 @@ shortest_paths = []
 
 layer = 3  # For testing
 
+X_SIZE = data.X_SIZE
+Y_SIZE = data.Y_SIZE
+Z_SIZE = data.Z_SIZE
+
 SCALE = 30
 GRID_WIDTH = X_SIZE*SCALE
 GRID_HEIGHT = Y_SIZE*SCALE
