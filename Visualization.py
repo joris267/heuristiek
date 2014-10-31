@@ -6,17 +6,12 @@ import sys
 from pygame.locals import *
 print 'imported'
 
-X_SIZE = 17
-Y_SIZE = 12
-Z_SIZE = 8
-
 listpoints = [(1, 1, 3), (6, 1, 3), (10, 1, 3), (15, 1, 3)]  # For testing
 listpoints1 = [(1, 1, 3), (1, 8, 3)]
 
 netlist = data.netlist
 chips = data.chips
 shortest_paths = []
-
 
 layer = 3  # For testing
 
@@ -115,32 +110,6 @@ def drawLine(pathpoints, layer):
         pygame.draw.lines(DISPLAYSURF, GREEN, False, path, 2)
 
 
-def findShortestPath(start, end):
-    """ Algorithm that finds shortest intersecting path between 2 points
-     Returns a list of points that make up the shortest path in one layer"""
-    
-    x_start = min([start[0], end[0]])
-    if x_start == start[0]:
-        x_end = end[0]
-        y_start = start[1]
-        y_end = end[1]
-    else:
-        x_end = start[0]
-        y_start = end[1]
-        y_end = start[1]
-
-    path_points = []
-
-    for i in range(x_end - x_start + 1):
-        path_points.append((x_start + i, y_start, start[2]))
-
-    if y_end != y_start:
-        direction = (y_end-y_start)/abs(y_end-y_start)  # -1 or 1
-        for j in range(0,y_end - y_start + direction, direction):
-            path_points.append((x_end, y_start + j, end[2]))        
-    return path_points
-
-
 def drawPaths(paths, layer):
     for path in paths:
         drawLine(path, layer)
@@ -156,7 +125,7 @@ if __name__ == '__main__':
     for i in range(len(netlist)):
         start = chips[netlist[i][0]]
         end = chips[netlist[i][1]]
-        shortest_paths.append(findShortestPath(start,end))
+        shortest_paths.append(grid.findShortestPath(start, end))
         print start, end
     
     drawPaths(shortest_paths, layer)
