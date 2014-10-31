@@ -29,8 +29,8 @@
       <file leaf-file-name="Visualization.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Visualization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.43333334" vertical-offset="99" max-vertical-offset="4199">
-              <caret line="18" column="43" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="43" />
+            <state vertical-scroll-proportion="0.047222223" vertical-offset="1870" max-vertical-offset="4199">
+              <caret line="114" column="12" selection-start-line="114" selection-start-column="12" selection-end-line="114" selection-end-column="12" />
               <folding />
             </state>
           </provider>
@@ -82,7 +82,7 @@
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
-      <showMembers />
+      <showMembers ProjectPane="true" />
       <showModules />
       <showLibraryContents />
       <hideEmptyPackages />
@@ -418,7 +418,11 @@
       <created>1414762722806</created>
       <updated>1414762722806</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="wat style updates">
+      <created>1414763816456</created>
+      <updated>1414763816456</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -462,7 +466,8 @@
     </option>
     <MESSAGE value="test joris" />
     <MESSAGE value="tst2" />
-    <option name="LAST_COMMIT_MESSAGE" value="tst2" />
+    <MESSAGE value="wat style updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="wat style updates" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -478,8 +483,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Visualization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.43333334" vertical-offset="99" max-vertical-offset="4199">
-          <caret line="18" column="43" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="43" />
+        <state vertical-scroll-proportion="0.047222223" vertical-offset="1870" max-vertical-offset="4199">
+          <caret line="114" column="12" selection-start-line="114" selection-start-column="12" selection-end-line="114" selection-end-column="12" />
           <folding />
         </state>
       </provider>

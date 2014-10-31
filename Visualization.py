@@ -109,7 +109,7 @@ class Button:
         return font.render(self.text, 1, self.font_color)
       
     def color(self):
-          '''change color when hovering'''
+        '''change color when hovering'''
         if self.is_hover:
             return self.hover_color
         else:
@@ -127,7 +127,7 @@ class Button:
     def check_hover(self, mouse):
         '''adjust is_hover value based on mouse over button - to change hover color'''
         if self.obj.collidepoint(mouse):
-        self.is_hover = True
+            self.is_hover = True
         else:
             self.is_hover = False
 
