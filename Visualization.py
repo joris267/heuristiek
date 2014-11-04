@@ -4,72 +4,91 @@ import data as data
 import pygame
 import sys
 import grid
-from pygame.locals import *
+
 print 'imported'
 
-#listpoints = [(1, 1, 3), (6, 1, 3), (10, 1, 3), (15, 1, 3)]  # For testing
-listpoints = [[(1, 1, 3), (1, 8, 3),(1,8,4),(6,8,4),(6,8,4),(6,8,3)]]
-#listpoints = [[(1,1,2)]]
+listpoints = [[(1, 1, 3), (1, 2, 3), (1, 3, 3), (1, 4, 3), (1, 5, 3),
+               (1, 5, 4), (2, 5, 4), (3, 5, 4), (4, 5, 4),
+               (4, 5, 3), (5, 5, 3), (6, 5, 3), (6, 6, 3),
+               (6, 6, 2), (5, 6, 2), (4, 6, 2), (3, 6, 2), (3, 5, 2), (3, 4, 2),
+               (3, 4, 3), (3, 3, 3),
+               (3, 3, 4),
+               (3, 3, 5), (3, 4, 5)]]
 
-netlist = data.netlist
-chips = data.chips
+netlist = data.netlist  # The paths that need to be drawn
+chips = data.chips  # The chips on the grid
 
 shortest_paths = []
 
-layer = 3  # For testing
+layer = 3  # The layer that is drawn first
 
-X_SIZE = data.X_SIZE
-Y_SIZE = data.Y_SIZE
-Z_SIZE = data.Z_SIZE
+X_SIZE = data.X_SIZE  #
+Y_SIZE = data.Y_SIZE  # Dimension of the grid
+Z_SIZE = data.Z_SIZE  #
 
 SCALE = 30
-GRID_WIDTH = X_SIZE*SCALE
-GRID_HEIGHT = Y_SIZE*SCALE
+GRID_WIDTH = X_SIZE * SCALE
+GRID_HEIGHT = Y_SIZE * SCALE
 PADDING = 30
 
-WINDOW_WIDTH = GRID_WIDTH+300
-WINDOW_HEIGHT = GRID_HEIGHT+2*PADDING
+WINDOW_WIDTH = GRID_WIDTH + 300
+WINDOW_HEIGHT = GRID_HEIGHT + (2 * PADDING)
 CELLSIZE = SCALE
-CHIPSIZE = CELLSIZE/2
+CHIPSIZE = CELLSIZE / 2
 
-DARKGRAY = (40,40,40)
+DARKGRAY = (40, 40, 40)
 RED = (255, 0, 0)
-GREEN = (255, 255, 255)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+WHITE = (255, 255, 255)
 
+COLOR_DOWN = BLUE
+COLOR_UP = RED
+LINE_COLOR = WHITE
+CHIP_COLOR = GREEN
 
 
 class Button:
     def __init__(self, text):
         self.text = text
         self.is_hover = False
-        self.default_color = (100,100,100)
-        self.hover_color = (255,255,255)
-        self.font_color = (0,0,0)
+        self.default_color = (100, 100, 100)
+        self.hover_color = (255, 255, 255)
+        self.font_color = (0, 0, 0)
         self.obj = None
-      
+
     def label(self):
-        """button label font"""
+        """
+        Button label font
+        """
         font = pygame.font.Font(None, 20)
         return font.render(self.text, 1, self.font_color)
-      
+
     def color(self):
-        """change color when hovering"""
+        """
+        Change color when hovering
+        """
         if self.is_hover:
             return self.hover_color
         else:
             return self.default_color
 
-    def draw(self, screen, mouse, rectcoord, labelcoord):
-        """create rect obj, draw, and change color based on input"""
-        self.obj  = pygame.draw.rect(screen, self.color(), rectcoord)
+    def draw(self, screen, mouse_object, rectcoord, labelcoord):
+        """
+        Create rect obj, draw, and change color based on input
+        """
+        self.obj = pygame.draw.rect(screen, self.color(), rectcoord)
         screen.blit(self.label(), labelcoord)
-      
-        #change color if mouse over button
-        self.check_hover(mouse)
-      
-    def check_hover(self, mouse):
-        """adjust is_hover value based on mouse over button - to change hover color"""
-        if self.obj.collidepoint(mouse):
+
+        # change color if mouse over button
+        self.checkHover(mouse_object)
+
+    def checkHover(self, mouse_object):
+        """
+        Adjust is_hover value based on mouse over button - to change hover color
+        """
+        if self.obj.collidepoint(mouse_object):
             self.is_hover = True
         else:
             self.is_hover = False
@@ -78,95 +97,130 @@ class Button:
 def changeLayerText(layertext):
     font = pygame.font.Font(None, 42)
     text = font.render(layertext, 1, (100, 100, 0))
-    DISPLAYSURF.blit(text, (GRID_WIDTH+PADDING+((WINDOW_WIDTH-GRID_WIDTH)/3.4),100))
+    DISPLAYSURF.blit(text, (GRID_WIDTH + PADDING + ((WINDOW_WIDTH - GRID_WIDTH) / 3.4), 100))
 
 
 def clearWindow():
     DISPLAYSURF.fill((0, 0, 0))
-#    DISPLAYSURF.set_alpha(255)
-##    rect1 = Rect(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_WIDTH-100,WINDOW_HEIGHT-100)
-##    DISPLAYSURF.blit(rect1)
 
 
-def drawGrid(layer):
-    """ Draws the grid for a given layer """
-    for x in range(PADDING, GRID_WIDTH+CELLSIZE+PADDING, CELLSIZE): # draw vertical lines
-        pygame.draw.line(DISPLAYSURF, DARKGRAY, (x, PADDING), (x, GRID_HEIGHT+PADDING))
-    for y in range(PADDING, GRID_HEIGHT+CELLSIZE+PADDING, CELLSIZE): # draw horizontal lines
-        pygame.draw.line(DISPLAYSURF, DARKGRAY, (PADDING, y), (GRID_WIDTH+PADDING, y))
-    if layer == 3:
-        for i in range(len(chips)):
-            x = (chips[i][0]*CELLSIZE)-(CHIPSIZE/2)+PADDING
-            y = (chips[i][1]*CELLSIZE)-(CHIPSIZE/2)+PADDING
-            pygame.draw.rect(DISPLAYSURF, RED, (x,y,CHIPSIZE,CHIPSIZE), 0)
+# DISPLAYSURF.set_alpha(255)
+#    rect1 = Rect(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_WIDTH-100,WINDOW_HEIGHT-100)
+#    DISPLAYSURF.blit(rect1)
 
 
-def drawLine(pathpoints, layer):
-    """ If the shortest path between two points is found, the list of connecting points
+def drawGrid(layer_number):
+    """
+    Draws the grid for a given layer and chips
+    """
+    for x in range(PADDING, GRID_WIDTH + CELLSIZE + PADDING, CELLSIZE):  # draw vertical lines
+        pygame.draw.line(DISPLAYSURF, DARKGRAY, (x, PADDING), (x, GRID_HEIGHT + PADDING))
+    for y in range(PADDING, GRID_HEIGHT + CELLSIZE + PADDING, CELLSIZE):  # draw horizontal lines
+        pygame.draw.line(DISPLAYSURF, DARKGRAY, (PADDING, y), (GRID_WIDTH + PADDING, y))
+    if layer_number == 3:
+        for j in range(len(chips)):
+            x = (chips[j][0] * CELLSIZE) - (CHIPSIZE / 2) + PADDING
+            y = (chips[j][1] * CELLSIZE) - (CHIPSIZE / 2) + PADDING
+            pygame.draw.rect(DISPLAYSURF, CHIP_COLOR, (x, y, CHIPSIZE, CHIPSIZE), 0)
+
+
+def drawLine(pathpoints, layer_number):
+    """
+    If the shortest path between two points is found, the list of connecting points
     is given to this function and these are converted to pixels and then the connecting
-    line is drawn """
+    line is drawn
+    """
     path = []
-    for i in range(len(pathpoints)):
-        print i
-        path_x = pathpoints[i][0]*CELLSIZE+PADDING
-        print pathpoints[i][0]
-        path_y = pathpoints[i][1]*CELLSIZE+PADDING
-        if pathpoints[i][2] == layer:
+    for k in range(len(pathpoints)):
+        path_x = pathpoints[k][0] * CELLSIZE + PADDING
+        path_y = pathpoints[k][1] * CELLSIZE + PADDING
+
+        if pathpoints[k][2] == layer_number:
             path.append((path_x, path_y))
-    if len(path) == 1:
-        pygame.draw.circle(DISPLAYSURF, GREEN, path[0], 3, 0)
-    if len(path) > 1:          
-        pygame.draw.lines(DISPLAYSURF, GREEN, False, path, 2)
+        elif path:  # Else if path is not empty (path != [])
+            # Draw the path
+            if len(path) == 1:
+                pygame.draw.circle(DISPLAYSURF, LINE_COLOR, path[0], 5, 0)
+            if len(path) > 1:
+                pygame.draw.lines(DISPLAYSURF, LINE_COLOR, False, path, 2)
+            path = []
+
+        try:  # See if this point went up or down
+            if pathpoints[k - 1][2] < layer_number:
+                pygame.draw.circle(DISPLAYSURF, COLOR_DOWN, path[-1], 5, 0)
+            if pathpoints[k - 1][2] > layer_number:
+                pygame.draw.circle(DISPLAYSURF, COLOR_UP, path[-1], 5, 0)
+        except IndexError:
+            # This is the first point
+            pass
+        try:  # See if the next point goes up or down
+            if pathpoints[k + 1][2] < layer_number:
+                pygame.draw.circle(DISPLAYSURF, COLOR_DOWN, path[-1], 5, 0)
+            if pathpoints[k + 1][2] > layer_number:
+                pygame.draw.circle(DISPLAYSURF, COLOR_UP, path[-1], 5, 0)
+        except IndexError:
+            # This is the last point
+            pass
 
 
-def drawPaths(paths, layer):
+    if path:
+        # Draw the last path
+        if len(path) == 1:
+            pygame.draw.circle(DISPLAYSURF, LINE_COLOR, path[0], 3, 0)
+        if len(path) > 1:
+            pygame.draw.lines(DISPLAYSURF, LINE_COLOR, False, path, 2)
+
+
+def drawPaths(paths, layer_number):
     for path in paths:
-        drawLine(path, layer)
-      
+        drawLine(path, layer_number)
+
+
 if __name__ == '__main__':
 
     pygame.init()
     DISPLAYSURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption('Chips & Circuits Visualization - Team Chipmunks')
-    prev_btn = Button('<- Previous' )
+    prev_btn = Button('<- Previous')
     next_btn = Button('Next ->')
-    
+
     for i in range(len(netlist)):
         start = chips[netlist[i][0]]
         end = chips[netlist[i][1]]
         shortest_paths.append(grid.findShortestPath(start, end))
-        print start, end
 
-    shortest_paths = listpoints
+    #listpoints = shortest_paths
 
-    drawPaths(shortest_paths, layer)
-        
-    while True:  # main grid loop
-        drawGrid(layer)
-        changeLayerText("Layer #" + str(layer))
-         
+    # Draw the visualisation the first time
+    drawGrid(layer)
+    changeLayerText("Layer #" + str(layer))
+    drawPaths(listpoints, layer)
+
+    while True:  # Main loop
         mouse = pygame.mouse.get_pos()
 
-        prev_btn.draw(DISPLAYSURF, mouse, (GRID_WIDTH + 2*PADDING, GRID_HEIGHT-3*PADDING, 100, 20),
-                      (GRID_WIDTH + 2*PADDING+3, GRID_HEIGHT-3*PADDING+3))
-        next_btn.draw(DISPLAYSURF, mouse, (GRID_WIDTH + 3*PADDING+100, GRID_HEIGHT-3*PADDING, 100, 20),
-                      (GRID_WIDTH + 3*PADDING+103, GRID_HEIGHT-3*PADDING+3))
+        prev_btn.draw(DISPLAYSURF, mouse, (GRID_WIDTH + 2 * PADDING, GRID_HEIGHT - 3 * PADDING, 100, 20),
+                      (GRID_WIDTH + 2 * PADDING + 3, GRID_HEIGHT - 3 * PADDING + 3))
+        next_btn.draw(DISPLAYSURF, mouse, (GRID_WIDTH + 3 * PADDING + 100, GRID_HEIGHT - 3 * PADDING, 100, 20),
+                      (GRID_WIDTH + 3 * PADDING + 103, GRID_HEIGHT - 3 * PADDING + 3))
         pygame.display.update()
-        
+
         for event in pygame.event.get():
-            if event.type == QUIT:
-                 pygame.quit()
-                 sys.exit()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if prev_btn.obj.collidepoint(mouse) and layer > 0:
                     layer -= 1
-                    changeLayerText("Layer #" + str(layer))
                     clearWindow()
-                    drawPaths(shortest_paths, layer)
+                    drawGrid(layer)
+                    changeLayerText("Layer #" + str(layer))
+                    drawPaths(listpoints, layer)
                     pygame.display.update()
                 elif next_btn.obj.collidepoint(mouse) and layer < 7:
-                    layer +=1
-                    changeLayerText("Layer #" + str(layer))
+                    layer += 1
                     clearWindow()
-                    drawPaths(shortest_paths, layer)
+                    drawGrid(layer)
+                    changeLayerText("Layer #" + str(layer))
+                    drawPaths(listpoints, layer)
                     pygame.display.update()
