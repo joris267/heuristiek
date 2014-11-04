@@ -20,13 +20,18 @@ def createGrid():
         grid[chip[0]][chip[1]][0] = False
     return grid
 
+# point = (1,1,1) #For testing
+
+def isOccupied(point):
+     return createGrid()[point[0]][point[1]][point[2]]
+
+#print isOccupied(point)
 
 def findShortestPath(start, end):
     """
     Algorithm that finds shortest intersecting path between 2 points
     Returns a list of points that make up the shortest path in one layer
     """
-
     x_start = min([start[0], end[0]])
     if x_start == start[0]:
         x_end = end[0]

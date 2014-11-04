@@ -7,8 +7,9 @@ import grid
 from pygame.locals import *
 print 'imported'
 
-listpoints = [(1, 1, 3), (6, 1, 3), (10, 1, 3), (15, 1, 3)]  # For testing
-listpoints1 = [(1, 1, 3), (1, 8, 3)]
+#listpoints = [(1, 1, 3), (6, 1, 3), (10, 1, 3), (15, 1, 3)]  # For testing
+listpoints = [[(1, 1, 3), (1, 8, 3),(1,8,4),(6,8,4),(6,8,4),(6,8,3)]]
+#listpoints = [[(1,1,2)]]
 
 netlist = data.netlist
 chips = data.chips
@@ -33,7 +34,8 @@ CHIPSIZE = CELLSIZE/2
 
 DARKGRAY = (40,40,40)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+GREEN = (255, 255, 255)
+
 
 
 class Button:
@@ -57,7 +59,6 @@ class Button:
         else:
             return self.default_color
 
-    # noinspection PyUnreachableCode
     def draw(self, screen, mouse, rectcoord, labelcoord):
         """create rect obj, draw, and change color based on input"""
         self.obj  = pygame.draw.rect(screen, self.color(), rectcoord)
@@ -106,7 +107,9 @@ def drawLine(pathpoints, layer):
     line is drawn """
     path = []
     for i in range(len(pathpoints)):
+        print i
         path_x = pathpoints[i][0]*CELLSIZE+PADDING
+        print pathpoints[i][0]
         path_y = pathpoints[i][1]*CELLSIZE+PADDING
         if pathpoints[i][2] == layer:
             path.append((path_x, path_y))
@@ -133,7 +136,9 @@ if __name__ == '__main__':
         end = chips[netlist[i][1]]
         shortest_paths.append(grid.findShortestPath(start, end))
         print start, end
-    
+
+    shortest_paths = listpoints
+
     drawPaths(shortest_paths, layer)
         
     while True:  # main grid loop
