@@ -17,9 +17,6 @@ listpoints = [[(1, 1, 3), (1, 2, 3), (1, 3, 3), (1, 4, 3), (1, 5, 3),
 
 netlist = data.netlist  # The paths that need to be drawn
 chips = data.chips  # The chips on the grid
-
-shortest_paths = []
-
 layer = 3  # The layer that is drawn first
 X_SIZE = data.X_SIZE  #
 Y_SIZE = data.Y_SIZE  # Dimension of the grid
@@ -104,7 +101,7 @@ def clearWindow():
 
 
 # DISPLAYSURF.set_alpha(255)
-#    rect1 = Rect(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_WIDTH-100,WINDOW_HEIGHT-100)
+# rect1 = Rect(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_WIDTH-100,WINDOW_HEIGHT-100)
 #    DISPLAYSURF.blit(rect1)
 
 
@@ -161,7 +158,6 @@ def drawLine(pathpoints, layer_number):
             # This is the last point
             pass
 
-
     if path:
         # Draw the last path
         if len(path) == 1:
@@ -174,25 +170,19 @@ def drawPaths(paths, layer_number):
     for path in paths:
         drawLine(path, layer_number)
 
-def runVisualization(layer = 3):
-    global DISPLAYSURF, WINDOW_WIDTH, WINDOW_HEIGHT,GRID_WIDTH, PADDING, GRID_HEIGHT, MOUSEBUTTONDOWN
+
+def runVisualization(paths, active_layer = 3):
+    global DISPLAYSURF, WINDOW_WIDTH, WINDOW_HEIGHT, GRID_WIDTH, PADDING, GRID_HEIGHT
     pygame.init()
     DISPLAYSURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption('Chips & Circuits Visualization - Team Chipmunks')
     prev_btn = Button('<- Previous')
     next_btn = Button('Next ->')
 
-    for i in range(len(netlist)):
-        start = chips[netlist[i][0]]
-        end = chips[netlist[i][1]]
-        shortest_paths.append(grid.findShortestPath(start, end))
-
-    #listpoints = shortest_paths
-
     # Draw the visualisation the first time
-    drawGrid(layer)
-    changeLayerText("Layer #" + str(layer))
-    drawPaths(listpoints, layer)
+    drawGrid(active_layer)
+    changeLayerText("Layer #" + str(active_layer))
+    drawPaths(paths, active_layer)
 
     while True:  # Main loop
         mouse = pygame.mouse.get_pos()
@@ -208,20 +198,25 @@ def runVisualization(layer = 3):
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if prev_btn.obj.collidepoint(mouse) and layer > 0:
+                if prev_btn.obj.collidepoint(mouse) and active_layer > 0:
                     layer -= 1
                     clearWindow()
                     drawGrid(layer)
                     changeLayerText("Layer #" + str(layer))
-                    drawPaths(listpoints, layer)
+                    drawPaths(paths, layer)
                     pygame.display.update()
-                elif next_btn.obj.collidepoint(mouse) and layer < 7:
+                elif next_btn.obj.collidepoint(mouse) and active_layer < 7:
                     layer += 1
                     clearWindow()
                     drawGrid(layer)
                     changeLayerText("Layer #" + str(layer))
-                    drawPaths(listpoints, layer)
+                    drawPaths(paths, layer)
                     pygame.display.update()
 
+
 if __name__ == '__main__':
-    runVisualization(layer)
+    shortest_paths = grid.theoreticalShortestPaths()
+    print "The total wire length is %i and there are %i intersections" % (grid.calculateWireLenght(shortest_paths),
+                                                                          grid.checkIntsections(shortest_paths))
+
+    runVisualization(shortest_paths, layer)

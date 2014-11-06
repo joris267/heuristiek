@@ -1,12 +1,14 @@
 import numpy as np
 import data as data
 import operator
+import itertools
 
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
 chips = data.chips
 netlist = data.netlist
+
 
 def createGrid():
     """
@@ -20,14 +22,12 @@ def createGrid():
     return grid
 
 
-
-# point = (1,1,1) #For testing
-
 def isOccupied(point):
     """
     For a given point (x,y,z) returns True if occupied, else False
     """
     return createGrid()[point[0]][point[1]][point[2]]
+
 
 def sortDistance(netlist):
     """
@@ -73,19 +73,20 @@ def findShortestPath(start, end):
     conflicts = []
 
     for i in range(x_end - x_start + 1):
-        if isOccupied((i, y_start,z)):
+        if isOccupied((i, y_start, z)):
             conflicts.append(i)
         path_points.append((x_start + i, y_start, start[2]))
 
     if y_end != y_start:
         direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
         for j in range(0, y_end - y_start + direction, direction):
-            if isOccupied((x_end,j,z)):
+            if isOccupied((x_end, j, z)):
                 conflicts.append(j)
             path_points.append((x_end, y_start + j, end[2]))
 
     print len(conflicts)
     return path_points
+
 
 def calculateWireLenght(path_list):
     """
@@ -99,7 +100,54 @@ def calculateWireLenght(path_list):
         total_length += len(path)
     return total_length
 
+
+def checkIntsections(path_list):
+    """
+    Checks if there are intersections in the path.
+    Returns the number of intersections in the path
+    """
+    joined_list = list(itertools.chain.from_iterable(path_list))
+    unique_points = len(set(joined_list))
+    total_points = len(joined_list)
+    return total_points - unique_points
+
+
+def connectionsPerChip(netlist):
+    """
+    returns a dictionary with the chip as key and the number of connections as value
+    """
+
+    chip_to_occurrences = {}
+
+    # list(itertools.chain.from_iterable(netlist)) is quickest way to chain items in a list together in a new list
+    chips_in_netlist = list(itertools.chain.from_iterable(netlist))
+
+    # bincount counts occurrences of integers in list. Value is put at the index
+    # i.e. np.bincount([0,1,1,4]) => [0,2,0,0,1]
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.bincount.html
+    occurrences = np.bincount(chips_in_netlist)
+    for i in range(len(occurrences)):
+        chip_to_occurrences[i] = occurrences[i]
+
+    return chip_to_occurrences
+
+
+def theoreticalShortestPaths():
+    """
+    Find the theoretical shortest paths
+    returns a list of lists with the path points
+    """
+    global chips
+    shortest_paths = []
+    for i in range(len(netlist)):
+        start = chips[netlist[i][0]]
+        end = chips[netlist[i][1]]
+        shortest_paths.append(findShortestPath(start, end))
+
+    return shortest_paths
+
 if __name__ == "__main__":
-    grid = createGrid()
-    sortDistance(netlist)
-    findShortestPath((1,1,3),(9,4,3))
+    print connectionsPerChip(data.netlist)
+    # grid = createGrid()
+    # sortDistance(netlist)
+    # findShortestPath((1,1,3),(9,4,3))
