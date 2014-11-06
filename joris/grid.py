@@ -1,9 +1,11 @@
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 from Visualization_test_joris import *
 import pygame
 import sys
 from pygame.locals import *
+
 
 def create_grid():
     """

@@ -21,7 +21,6 @@ chips = data.chips  # The chips on the grid
 shortest_paths = []
 
 layer = 3  # The layer that is drawn first
-
 X_SIZE = data.X_SIZE  #
 Y_SIZE = data.Y_SIZE  # Dimension of the grid
 Z_SIZE = data.Z_SIZE  #
@@ -175,9 +174,8 @@ def drawPaths(paths, layer_number):
     for path in paths:
         drawLine(path, layer_number)
 
-
-if __name__ == '__main__':
-
+def runVisualization(layer = 3):
+    global DISPLAYSURF, WINDOW_WIDTH, WINDOW_HEIGHT,GRID_WIDTH, PADDING, GRID_HEIGHT, MOUSEBUTTONDOWN
     pygame.init()
     DISPLAYSURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption('Chips & Circuits Visualization - Team Chipmunks')
@@ -224,3 +222,6 @@ if __name__ == '__main__':
                     changeLayerText("Layer #" + str(layer))
                     drawPaths(listpoints, layer)
                     pygame.display.update()
+
+if __name__ == '__main__':
+    runVisualization(layer)

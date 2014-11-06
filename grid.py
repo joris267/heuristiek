@@ -19,7 +19,7 @@ def createGrid():
         grid[chip[0]][chip[1]][0] = False
     return grid
 
-grid = createGrid()
+
 
 # point = (1,1,1) #For testing
 
@@ -51,7 +51,7 @@ def sortDistance(netlist):
         sorted_netlist.append(sorted_dictionary[j][0])
 
     return sorted_netlist
-sortDistance(netlist)
+
 
 def findShortestPath(start, end):
     """
@@ -87,4 +87,19 @@ def findShortestPath(start, end):
     print len(conflicts)
     return path_points
 
-findShortestPath((1,1,3),(9,4,3))
+def calculateWireLenght(path_list):
+    """
+    Calculates the total length of all the paths
+    input is a list of lists in the form:
+    [[(start_path_1), (point_path_1), (end_path_1)], [path_2...]]
+    """
+
+    total_length = 0
+    for path in path_list:
+        total_length += len(path)
+    return total_length
+
+if __name__ == "__main__":
+    grid = createGrid()
+    sortDistance(netlist)
+    findShortestPath((1,1,3),(9,4,3))
