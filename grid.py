@@ -29,7 +29,7 @@ def isOccupied(point):
     """
     return grid[point[0]][point[1]][point[2]]
 
-def setOccupation(point, occupation):
+def setOccupation(point, occupation = True):
     """
     For a given point changes it's value in the grid to the given occupation.
     Returns nothing.
@@ -87,7 +87,7 @@ def findShortestPath(start, end):
     if y_end != y_start:
         direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
         for j in range(0, y_end - y_start + direction, direction):
-            if isOccupied((x_end, j, z)):
+            if isOccupied((x_end, Y_start + j, z)):
                 conflicts.append(j)
             path_points.append((x_end, y_start + j, end[2]))
 
@@ -210,12 +210,17 @@ def findPossiblePathSameLayer(start, end):
     x_start, x_end, y_start, y_end = calculateEndStart(start, end)
     path_points = []
 
-    if random.randrange(2): # start x direction
+    if True:# random.randrange(2): # start x direction
         for i in range(x_end - x_start + 1):
             if not isOccupied((i, y_start, z)):
                 path_points.append((x_start + i, y_start, start[2]))
+                #set occupied
 
             else:
+                for j in range(0, y_end - y_start + direction, direction):
+                    if not isOccupied((x_start + i, y_start + j, z)):
+                        path_points.append((x_start + i, y_start, start[2]))
+                        #set occupied
 
 
 
