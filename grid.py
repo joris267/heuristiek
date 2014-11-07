@@ -29,6 +29,12 @@ def isOccupied(point):
     """
     return grid[point[0]][point[1]][point[2]]
 
+def setOccupation(point, occupation):
+    """
+    For a given point changes it's value in the grid to the given occupation.
+    Returns nothing.
+    """
+    grid[point[0]][point[1]][point[2]] = occupation
 
 def sortDistance(netlist):
     """
