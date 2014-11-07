@@ -32,7 +32,7 @@ def isOccupied(point):
 def sortDistance(netlist):
     """
     For a given netlist calculates the distances between the given to be connected chips. Then returns
-    the netlist sorted by distance (shortes distance first).
+    the netlist sorted by distance (shortest distance first).
     """
     netlist_dictionary = {}
     for i in range(len(netlist)):
