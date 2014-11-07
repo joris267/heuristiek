@@ -128,11 +128,31 @@ def connectionsPerChip(netlist):
     occurrences = np.bincount(chips_in_netlist)
     for i in range(len(occurrences)):
         chip_to_occurrences[i] = occurrences[i]
-
     return chip_to_occurrences
 
 
-def theoreticalShortestPaths():
+def doubleStartEndPoints(netlist, chip_to_occurrences = None):
+    """
+    Find the number of double start/end points, that is, the sum of al occurrences higher then 1.
+
+    """
+    som = 0
+    if chip_to_occurrences == None:
+        chips_in_netlist = list(itertools.chain.from_iterable(netlist))
+        occurrences = np.bincount(chips_in_netlist)
+        for i in occurrences:
+            if i > 1:
+                som += i
+
+    else:
+        for i in chip_to_occurrences.values():
+            if i > 1:
+                som += 1
+
+    return som
+
+
+def theoreticalShortestPaths(netlist):
     """
     Find the theoretical shortest paths
     returns a list of lists with the path points
