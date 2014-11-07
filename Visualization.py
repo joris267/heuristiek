@@ -216,7 +216,7 @@ def runVisualization(paths, active_layer = 3):
 
 if __name__ == '__main__':
     shortest_paths = grid.theoreticalShortestPaths(netlist)
-    print "The total wire length is %i and there are %i intersections of wich there are %i on the endpoints" % (
+    print "The total wire length is %i and there are %i intersections of which there are %i on the endpoints" % (
         grid.calculateWireLenght(shortest_paths), grid.checkIntsections(shortest_paths), grid.doubleStartEndPoints(netlist))
 
     runVisualization(shortest_paths, layer)

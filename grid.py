@@ -2,6 +2,7 @@ import numpy as np
 import data as data
 import operator
 import itertools
+import random
 
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
@@ -26,7 +27,7 @@ def isOccupied(point):
     """
     For a given point (x,y,z) returns True if occupied, else False
     """
-    return createGrid()[point[0]][point[1]][point[2]]
+    return grid[point[0]][point[1]][point[2]]
 
 
 def sortDistance(netlist):
@@ -151,6 +152,25 @@ def doubleStartEndPoints(netlist, chip_to_occurrences = None):
 
     return som
 
+def endpointsChips(netlist):
+    """
+    returns dictonary of the connections a chip has:
+    i.e. {1:[1,2], 2:[3,23]}
+    """
+    chip_to_chips = {}
+    for chip in range(len(chips)):
+        temp_list = []
+        for connection in netlist:
+            if chip in connection:
+                temp_list.append(connection)
+        if len(temp_list) == 0:
+            print "chip %i has no connections"%(chip)
+        else:
+            temp_list = set(itertools.chain.from_iterable(temp_list))
+            temp_list.remove(chip)
+            chip_to_chips[chip] = temp_list
+
+    return chip_to_chips
 
 def theoreticalShortestPaths(netlist):
     """
@@ -166,8 +186,48 @@ def theoreticalShortestPaths(netlist):
 
     return shortest_paths
 
+def calculateEndStart(start, end):
+    z = start[2]
+    x_start = min([start[0], end[0]])
+    if x_start == start[0]:
+        x_end = end[0]
+        y_start = start[1]
+        y_end = end[1]
+    else:
+        x_end = start[0]
+        y_start = end[1]
+        y_end = start[1]
+
+    return x_start, x_end, y_start, y_end
+
+def findPossiblePathSameLayer(start, end):
+    x_start, x_end, y_start, y_end = calculateEndStart(start, end)
+    path_points = []
+
+    if random.randrange(2): # start x direction
+        for i in range(x_end - x_start + 1):
+            if not isOccupied((i, y_start, z)):
+                path_points.append((x_start + i, y_start, start[2]))
+
+            else:
+
+
+
+    if y_end != y_start:
+        direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
+        for j in range(0, y_end - y_start + direction, direction):
+            if isOccupied((x_end, j, z)):
+                conflicts.append(j)
+            path_points.append((x_end, y_start + j, end[2]))
+
+    print len(conflicts)
+    return path_points
+
+
 if __name__ == "__main__":
+    grid = createGrid()
     print connectionsPerChip(data.netlist)
-    # grid = createGrid()
+    print endpointsChips(data.netlist)
+
     # sortDistance(netlist)
     # findShortestPath((1,1,3),(9,4,3))
