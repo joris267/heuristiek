@@ -1,5 +1,5 @@
 import numpy as np
-import data as data
+import data_test as data
 import operator
 import itertools
 import random
@@ -19,7 +19,8 @@ def createGrid():
     """
     grid = np.ones(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=bool)
     for chip in chips:
-        grid[chip[0]][chip[1]][0] = False
+        pass
+        #grid[chip[0]][chip[1]][chip[2]] = False
     return grid
 
 
@@ -29,7 +30,7 @@ def isOccupied(point):
     """
     return grid[point[0]][point[1]][point[2]]
 
-def setOccupation(point, occupation = True):
+def setOccupation(point, occupation = False):
     """
     For a given point changes it's value in the grid to the given occupation.
     Returns nothing.
@@ -192,47 +193,6 @@ def theoreticalShortestPaths(netlist):
 
     return shortest_paths
 
-def calculateEndStart(start, end):
-    z = start[2]
-    x_start = min([start[0], end[0]])
-    if x_start == start[0]:
-        x_end = end[0]
-        y_start = start[1]
-        y_end = end[1]
-    else:
-        x_end = start[0]
-        y_start = end[1]
-        y_end = start[1]
-
-    return x_start, x_end, y_start, y_end
-
-def findPossiblePathSameLayer(start, end):
-    x_start, x_end, y_start, y_end = calculateEndStart(start, end)
-    path_points = []
-
-    if True:# random.randrange(2): # start x direction
-        for i in range(x_end - x_start + 1):
-            if not isOccupied((i, y_start, z)):
-                path_points.append((x_start + i, y_start, start[2]))
-                #set occupied
-
-            else:
-                for j in range(0, y_end - y_start + direction, direction):
-                    if not isOccupied((x_start + i, y_start + j, z)):
-                        path_points.append((x_start + i, y_start, start[2]))
-                        #set occupied
-
-
-
-    if y_end != y_start:
-        direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
-        for j in range(0, y_end - y_start + direction, direction):
-            if isOccupied((x_end, j, z)):
-                conflicts.append(j)
-            path_points.append((x_end, y_start + j, end[2]))
-
-    print len(conflicts)
-    return path_points
 
 
 if __name__ == "__main__":

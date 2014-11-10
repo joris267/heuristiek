@@ -1,9 +1,10 @@
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
 
-import data as data
+import data_test as data
 import pygame
 import sys
-import grid
+import grid as grid_file
+import algoritme_j
 
 print 'imported'
 
@@ -128,7 +129,14 @@ def drawLine(pathpoints, layer_number):
     """
     path = []
     for k in range(len(pathpoints)):
-        path_x = pathpoints[k][0] * CELLSIZE + PADDING
+        try:
+            path_x = pathpoints[k][0] * CELLSIZE + PADDING
+        except TypeError:
+            print pathpoints
+            print k
+            print pathpoints[k]
+            assert  False
+
         path_y = pathpoints[k][1] * CELLSIZE + PADDING
 
         if pathpoints[k][2] == layer_number:
@@ -199,24 +207,42 @@ def runVisualization(paths, active_layer = 3):
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if prev_btn.obj.collidepoint(mouse) and active_layer > 0:
-                    layer -= 1
+                    active_layer -= 1
                     clearWindow()
-                    drawGrid(layer)
-                    changeLayerText("Layer #" + str(layer))
-                    drawPaths(paths, layer)
+                    drawGrid(active_layer)
+                    changeLayerText("Layer #" + str(active_layer))
+                    drawPaths(paths, active_layer)
                     pygame.display.update()
                 elif next_btn.obj.collidepoint(mouse) and active_layer < 7:
-                    layer += 1
+                    active_layer += 1
                     clearWindow()
-                    drawGrid(layer)
-                    changeLayerText("Layer #" + str(layer))
-                    drawPaths(paths, layer)
+                    drawGrid(active_layer)
+                    changeLayerText("Layer #" + str(active_layer))
+                    drawPaths(paths, active_layer)
                     pygame.display.update()
 
 
 if __name__ == '__main__':
-    shortest_paths = grid.theoreticalShortestPaths(netlist)
-    print "The total wire length is %i and there are %i intersections of which there are %i on the endpoints" % (
-        grid.calculateWireLenght(shortest_paths), grid.checkIntsections(shortest_paths), grid.doubleStartEndPoints(netlist))
+    # shortest_paths = grid.theoreticalShortestPaths(netlist)
+    shortest_paths = []
+    grid = grid_file.createGrid()
+    for net in netlist:
+        path = []
+        start, end = chips[net[0]], chips[net[1]]
+        print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
+        original_value_start, original_value_end = algoritme_j.isFree(start), algoritme_j.isFree(end)
+        while len(path) < 3:
+            try:
+                path, grid = algoritme_j.findPossiblePath(start, end, grid)
+                break
+            except algoritme_j.PathLengthError:
+                algoritme_j.setOccupation(start, original_value_start)
+                algoritme_j.setOccupation(end, original_value_end)
 
+        shortest_paths.append(path)
+
+
+    print "The total wire length is %i and there are %i intersections of which there are %i on the endpoints" % (
+        grid_file.calculateWireLenght(shortest_paths), grid_file.checkIntsections(shortest_paths), grid_file.doubleStartEndPoints(netlist))
+    print shortest_paths
     runVisualization(shortest_paths, layer)
