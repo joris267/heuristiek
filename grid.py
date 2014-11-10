@@ -30,12 +30,14 @@ def isOccupied(point):
     """
     return grid[point[0]][point[1]][point[2]]
 
-def setOccupation(point, occupation = False):
+
+def setOccupation(point, occupation=False):
     """
     For a given point changes it's value in the grid to the given occupation.
     Returns nothing.
     """
     grid[point[0]][point[1]][point[2]] = occupation
+
 
 def sortDistance(netlist):
     """
@@ -88,7 +90,7 @@ def findShortestPath(start, end):
     if y_end != y_start:
         direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
         for j in range(0, y_end - y_start + direction, direction):
-            if isOccupied((x_end, Y_start + j, z)):
+            if isOccupied((x_end, y_start + j, z)):
                 conflicts.append(j)
             path_points.append((x_end, y_start + j, end[2]))
 
@@ -139,13 +141,13 @@ def connectionsPerChip(netlist):
     return chip_to_occurrences
 
 
-def doubleStartEndPoints(netlist, chip_to_occurrences = None):
+def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     """
     Find the number of double start/end points, that is, the sum of al occurrences higher then 1.
 
     """
     som = 0
-    if chip_to_occurrences == None:
+    if chip_to_occurrences is None:
         chips_in_netlist = list(itertools.chain.from_iterable(netlist))
         occurrences = np.bincount(chips_in_netlist)
         for i in occurrences:
@@ -158,6 +160,7 @@ def doubleStartEndPoints(netlist, chip_to_occurrences = None):
                 som += 1
 
     return som
+
 
 def endpointsChips(netlist):
     """
@@ -179,6 +182,7 @@ def endpointsChips(netlist):
 
     return chip_to_chips
 
+
 def theoreticalShortestPaths(netlist):
     """
     Find the theoretical shortest paths
@@ -192,7 +196,6 @@ def theoreticalShortestPaths(netlist):
         shortest_paths.append(findShortestPath(start, end))
 
     return shortest_paths
-
 
 
 if __name__ == "__main__":
