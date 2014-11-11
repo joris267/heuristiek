@@ -95,7 +95,7 @@ def _goRight(point):
 
 if __name__ == "__main__":
 
-    _points = [(3, 2, 3), (4, 3, 3)]
+    _points = [(3, 2, 3), (8, 7, 3)]
     _point_one = _points[0]
     _point_two = _points[1]
     _delta_x = _point_two[0]
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     _start = time.clock()
     _a = generateAllShortest(_point_one, _point_two)
     _total_time = time.clock() - _start
-    print "Extact:", len(_a)
+    print "Exact:", len(_a)
     print "All paths calculated in:", _total_time, "seconds."
     print "\nPath length:", len(_a[0])
     print _a[0]

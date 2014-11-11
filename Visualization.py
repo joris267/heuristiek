@@ -1,10 +1,8 @@
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
 
-import data as data
+import data_test as data
 import pygame
 import sys
-#import grid as grid_file
-#import algoritme_j
 
 listpoints = [[(1, 1, 3), (1, 2, 3), (1, 3, 3), (1, 4, 3), (1, 5, 3),
                (1, 5, 4), (2, 5, 4), (3, 5, 4), (4, 5, 4),
@@ -211,29 +209,6 @@ def runVisualization(paths, active_layer=3):
 
 
 if __name__ == '__main__':
-#    runVisualization([[(1,1,3)]], layer)
     pass
-#    shortest_paths = grid.theoreticalShortestPaths(netlist)
-#    shortest_paths = []
-#    grid = grid_file.createGrid()
-#    for net in netlist:
-#        path = []
-#        start, end = chips[net[0]], chips[net[1]]
-#        print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
-#        original_value_start, original_value_end = algoritme_j.isFree(start), algoritme_j.isFree(end)
-#        while len(path) < 3:
-#            try:
-#                path, grid = algoritme_j.findPossiblePath(start, end, grid)
-#                break
-#            except algoritme_j.PathLengthError:
-#                algoritme_j.setOccupation(start, original_value_start)
-#                algoritme_j.setOccupation(end, original_value_end)
-#
-#        shortest_paths.append(path)
-#
-#
-#    print "The total wire length is %i and there are %i intersections of which there are %i on the endpoints" % (
-#        grid_file.calculateWireLenght(shortest_paths),
-#        grid_file.checkIntsections(shortest_paths), grid_file.doubleStartEndPoints(netlist))
-#    print shortest_path
-#    runVisualization(shortest_paths, layer)
+
+
