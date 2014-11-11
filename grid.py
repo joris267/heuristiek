@@ -1,5 +1,5 @@
 import numpy as np
-import data_test as data
+import data
 import operator
 import itertools
 import random
@@ -19,10 +19,8 @@ def createGrid():
     """
     grid = np.ones(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=bool)
     for chip in chips:
-        pass
-        #grid[chip[0]][chip[1]][chip[2]] = False
+        grid[chip[0]][chip[1]][chip[2]] = False
     return grid
-
 
 def isOccupied(point):
     """

@@ -1,6 +1,6 @@
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
 
-import data_test as data
+import data
 import pygame
 import sys
 
@@ -31,16 +31,19 @@ WINDOW_HEIGHT = GRID_HEIGHT + (2 * PADDING)
 CELLSIZE = SCALE
 CHIPSIZE = CELLSIZE / 2
 
-DARKGRAY = (40, 40, 40)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
+ORANGE = (255, 128, 0)
+LIGHTBLUE = (0, 255, 255)
+PINK = (255, 0, 255)
+DARKGRAY = (40, 40, 40)
 WHITE = (255, 255, 255)
 
 COLOR_DOWN = BLUE
 COLOR_UP = RED
-LINE_COLOR = WHITE
+LINE_COLOR = YELLOW
 CHIP_COLOR = GREEN
 
 
@@ -97,7 +100,6 @@ def changeLayerText(layertext):
 
 def clearWindow():
     DISPLAYSURF.fill((0, 0, 0))
-
 
 def drawGrid(layer_number):
     """
