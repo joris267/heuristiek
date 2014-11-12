@@ -6,7 +6,7 @@ import time
 
 
 def shouldCalculateAllPaths(point1, point2):
-    if calculateNumberOfPaths(point1, point2) < 500:
+    if calculateNumberOfPaths(point1, point2) < 5000:
         return True
     return False
 
@@ -17,15 +17,33 @@ def calculateNumberOfPaths(point1, point2):
     Estimates the number of available shortest paths between point1 and point2
     A normal computer would calculate about 5000 to 8000 paths per second (my crappy machine anyway)
     """
-    x = abs(point2[0] - point1[0]) + 0.0001
-    y = abs(point2[1] - point1[1]) + 0.0001
+    x = abs(point2[0] - point1[0]) + 0.0001  # '+0.0001' is necessary because 0^0 is undefined
+    y = abs(point2[1] - point1[1]) + 0.0001  # and is doesn't contribute to the result
     return int(round(0.19 * pow(x, pow(y, 0.47)) * pow(y, pow(x, 0.47)) + 0.264 * math.exp(pow(x*y, 0.5))))
+
+
+def pathComplexity(path):
+    complexity = 0
+    x_changed = False
+    y_changed = False
+    for index in range(1, len(path)):
+        if path[index][0] == path[index - 1][0]:
+            if x_changed:
+                complexity += 1
+            x_changed = False
+            y_changed = True
+        elif path[index][1] == path[index - 1][1]:
+            if y_changed:
+                complexity += 1
+            x_changed = True
+            y_changed = False
+    return complexity
 
 
 def generateAllShortest(point1, point2):
     """
     !!! This function ignores the z-component of both points !!!
-    Calculates all the shortest paths between point1 and point2
+    Calculates all the shortest paths between point1 and point2 and sorts them by omplexity
     """
     possible_paths = [[point1]]
     done = False
@@ -46,7 +64,7 @@ def generateAllShortest(point1, point2):
                         path2 = copy.deepcopy(path)
                         path2[-1] = next_path
                         possible_paths.append(path2)
-    return possible_paths
+    return sorted(possible_paths, key=pathComplexity)
 
 
 def findNextPoints(point1, point2):
@@ -95,7 +113,7 @@ def _goRight(point):
 
 if __name__ == "__main__":
 
-    _points = [(3, 2, 3), (8, 7, 3)]
+    _points = [(3, 2, 3), (14, 8, 3)]
     _point_one = _points[0]
     _point_two = _points[1]
     _delta_x = _point_two[0]
@@ -109,5 +127,6 @@ if __name__ == "__main__":
     _total_time = time.clock() - _start
     print "Exact:", len(_a)
     print "All paths calculated in:", _total_time, "seconds."
-    print "\nPath length:", len(_a[0])
+    print "\nPath length:", len(_a[0]) - 1
     print _a[0]
+    print "Complexity a[0]:", pathComplexity(_a[2])

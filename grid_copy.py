@@ -12,9 +12,9 @@ FILL_VALUE = -1
 
 def createGrid():
     """
-    Creates an grid filled with 0's
+    Creates an grid filled with FILL_VALUE
     """
-    return numpy.full(shape=(X_SIZE, Y_SIZE, Z_SIZE), fill_value=FILL_VALUE, dtype=int)
+    return numpy.full(shape=(X_SIZE, Y_SIZE, Z_SIZE), fill_value=FILL_VALUE, dtype=type(FILL_VALUE))
 
 
 def isOccupied(input):
@@ -36,14 +36,20 @@ def isOccupied(input):
         return False
 
 
-def setOccupation(path, index):
+def setOccupation(path, grid_value):
+    """
+    Sets points in the grid as occupied. The number in the grid corresponds to the drawn line number.
+    """
     for index, point in enumerate(path):
-        if index != 0 or index != len(path):
-            grid[point[0]][point[1]][point[2]] = index
+        if index != 0 and index != len(path) - 1:
+            grid[point[0]][point[1]][point[2]] = grid_value
 
 
 def clearOccupation(path):
+    """
+    Clears the path from the grid. It sets the 'empty value' to all points of the given path
+    """
     for point in path:
-        grid[point[0]][point[1]][point[2]] = 0
+        grid[point[0]][point[1]][point[2]] = FILL_VALUE
 
 grid = createGrid()

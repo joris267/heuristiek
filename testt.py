@@ -1,3 +1,40 @@
+__author__ = 'Rick'
+
+import data
+import pathgenerator
+
+chips = data.chips
+netlist = data.netlist
+
+big_number = 50  # The amount of possible paths that is considered 'big'. Change this number
+
+no_of_paths_list = []
+
+for connection in netlist:
+    point_one = chips[connection[0]]
+    point_two = chips[connection[1]]
+    number = pathgenerator.calculateNumberOfPaths(point_one, point_two)
+    no_of_paths_list.append(number)
+    if number > big_number:
+        # Print the two chips with many possible paths,
+        # and the amount of possible paths
+        print point_one, point_two, "Amount", number
+
+
+bigger = 0
+for number in no_of_paths_list:
+    if number > big_number:
+        bigger += 1
+
+print "Total number of paths:", len(no_of_paths_list)
+print "Number of paths smaller than " + str(big_number) + ":", len(no_of_paths_list) - bigger
+print "Number of paths bigger than " + str(big_number) + ":", bigger
+
+print range(1, 10)
+
+###############################
+
+
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
 
 import data as data
@@ -215,3 +252,138 @@ def runVisualization(paths, active_layer=3):
                     drawPaths(paths, active_layer)
                     pygame.display.update()
     pygame.quit()
+
+#############################
+
+__author__ = 'Rick'
+
+import copy
+import math
+import time
+
+
+def shouldCalculateAllPaths(point1, point2):
+    if calculateNumberOfPaths(point1, point2) < 5000:
+        return True
+    return False
+
+
+def calculateNumberOfPaths(point1, point2):
+    """
+    !!! This function ignores the z-component of both points !!!
+    Estimates the number of available shortest paths between point1 and point2
+    A normal computer would calculate about 5000 to 8000 paths per second (my crappy machine anyway)
+    """
+    x = abs(point2[0] - point1[0]) + 0.0001  # '+0.0001' is necessary because 0^0 is undefined
+    y = abs(point2[1] - point1[1]) + 0.0001  # and is doesn't contribute to the result
+    return int(round(0.19 * pow(x, pow(y, 0.47)) * pow(y, pow(x, 0.47)) + 0.264 * math.exp(pow(x*y, 0.5))))
+
+
+def pathComplexity(path):
+    complexity = 0
+    x_changed = False
+    y_changed = False
+    for index in range(1, len(path)):
+        if path[index][0] == path[index - 1][0]:
+            if x_changed:
+                complexity += 1
+            x_changed = False
+            y_changed = True
+        elif path[index][1] == path[index - 1][1]:
+            if y_changed:
+                complexity += 1
+            x_changed = True
+            y_changed = False
+    return complexity
+
+
+def generateAllShortest(point1, point2):
+    """
+    !!! This function ignores the z-component of both points !!!
+    Calculates all the shortest paths between point1 and point2 and sorts them by omplexity
+    """
+    possible_paths = [[point1]]
+    done = False
+    while not done:
+        done_paths = 0
+        for path in possible_paths:
+            if path[-1] == point2:
+                done_paths += 1
+                if done_paths == len(possible_paths):
+                    done = True
+                    break
+                continue
+            else:
+                for number, next_path in enumerate(findNextPoints(path[-1], point2)):
+                    if number == 0:
+                        path.append(next_path)
+                    if number == 1:
+                        path2 = copy.deepcopy(path)
+                        path2[-1] = next_path
+                        possible_paths.append(path2)
+    return sorted(possible_paths, key=pathComplexity)
+
+
+def findNextPoints(point1, point2):
+    """
+    Returns all the points that are available for the next step (for the shortest path)
+    """
+    next_points = []
+    if point2[0] - point1[0] > 0:
+        next_points.append(_goRight(point1))
+    if point2[0] - point1[0] < 0:
+        next_points.append(_goLeft(point1))
+    if point2[1] - point1[1] > 0:
+        next_points.append(_goDown(point1))
+    if point2[1] - point1[1] < 0:
+        next_points.append(_goUp(point1))
+    return next_points
+
+
+def _goUp(point):
+    """
+    Returns the point above the given point
+    """
+    return point[0], point[1] - 1, point[2]
+
+
+def _goDown(point):
+    """
+    Returns the point below the given point
+    """
+    return point[0], point[1] + 1, point[2]
+
+
+def _goLeft(point):
+    """
+    Returns the point left of the given point
+    """
+    return point[0] - 1, point[1], point[2]
+
+
+def _goRight(point):
+    """
+    Returns the point right of the given point
+    """
+    return point[0] + 1, point[1], point[2]
+
+
+if __name__ == "__main__":
+
+    _points = [(3, 2, 3), (14, 8, 3)]
+    _point_one = _points[0]
+    _point_two = _points[1]
+    _delta_x = _point_two[0]
+    _delta_y = _point_two[1]
+
+    print "From", _point_one, "to " + str(_point_two) + ":"
+    print "Number of paths:"
+    print "Estimation:", calculateNumberOfPaths(_point_one, _point_two)
+    _start = time.clock()
+    _a = generateAllShortest(_point_one, _point_two)
+    _total_time = time.clock() - _start
+    print "Exact:", len(_a)
+    print "All paths calculated in:", _total_time, "seconds."
+    print "\nPath length:", len(_a[0]) - 1
+    print _a[0]
+    print "Complexity a[0]:", pathComplexity(_a[2])
