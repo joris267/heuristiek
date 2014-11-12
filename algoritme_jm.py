@@ -25,15 +25,18 @@ def calculateWireLenght(path_list):
     return total_length
 
 
-def checkIntsections(path_list):
+def checkIntersections(path_list):
     """
     Checks if there are intersections in the path.
     Returns the number of intersections in the path
     """
-    joined_list = list(itertools.chain.from_iterable(path_list))
-    unique_points = len(set(joined_list))
-    total_points = len(joined_list)
-    return total_points - unique_points
+    som = 0
+    joined_list = [hash(i) for i in list(itertools.chain.from_iterable(path_list))]  # lelijk
+    occurrences = np.bincount(joined_list)
+    for i in occurrences:
+        if i > 1:
+            som += i
+    return som
 
 def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     """
@@ -49,12 +52,12 @@ def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     else:
         for i in chip_to_occurrences.values():
             if i > 1:
-                som += 1
+                som += i
     return som
 
 def isFree(point):
     """
-    For a given point (x,y,z) returns True if occupied, else False
+    For a given point (x,y,z) returns True if free, else False
     """
     global grid
     for i in point:
@@ -65,7 +68,7 @@ def isFree(point):
       #  print value
     except:
         print "point ", point, "lies outside of grid"
-        return False
+        value = False
     return value
 
 def setOccupation(point, occupation=False):
@@ -125,7 +128,7 @@ def moveVertical(x, y_start, y_end, layer, path_points):
                 i -= direction  # go to last occupied point
                 break
 
-    endpoint =  (x, y_start + i, layer)
+    endpoint = (x, y_start + i, layer)
     return path_points, endpoint
 
 
@@ -151,9 +154,16 @@ def freeNeighbour(point):
     neighbours = []
     for dimension in range(3):
         for direction in range(-1, 2, 2):
+
+            #if on top layer, you cant go up
             if point[2] == 7:
                 if direction == 1 and dimension == 3:
                     continue
+            #if bottom you cant go down
+            elif point[2] == 0:
+                if direction == -1 and dimension == 3:
+                    continue
+
             list_point = list(point)
             list_point[dimension] += direction
             neighbour = tuple(list_point)
@@ -180,8 +190,11 @@ def findPossiblePath(start, end, grid2):
     grid = grid2
 
     x_start, x_end, y_start, y_end, z_start, z_end = calculateEndStart(start, end)
-    setOccupation(end, True)
     occupied_points = len(findOccupiedPoints())
+
+    start = (x_start, y_start, z_start)
+    end = (x_end, y_end, z_end)
+    setOccupation(end, True)
 
     path_points = [start]
     path_found = False
@@ -189,14 +202,12 @@ def findPossiblePath(start, end, grid2):
     print 'point = ', current_point
 
     while not path_found:
-        # print "path: ", path_points
-
-        if len(path_points) > 100:
+        if len(path_points) > 80:
             print "path too long"
             for point in path_points:
                 setOccupation(point, True)
-            findPossiblePath(start, end, grid)
-#            raise PathLengthError()
+            #return findPossiblePath(start, end, grid)
+            raise PathLengthError()
 
         # randomizes the order in which a path wil be sought in the x, y and z direction
         dimensions = 2
@@ -225,14 +236,18 @@ def findPossiblePath(start, end, grid2):
  #           findPossiblePath(start, end, grid, path_points)
             free_neighbours = freeNeighbour(current_point)
             if len(free_neighbours) == 0:
+                for i in range(1, len(path_points)):
+                    setOccupation(path_points[i], True)
+                del path_points
+                path_points = [start]
                 print "stuck: try again"
-                #return findPossiblePath(start, end, grid)
-                return path_points, grid
+#                return findPossiblePath(start, end, grid)
+                #return path_points, grid
+            else:
+                current_point = random.choice(free_neighbours)
+                path_points.append(current_point)
+                setOccupation(current_point)
 
-            current_point = random.choice(free_neighbours)
-            path_points.append(current_point)
-            setOccupation(current_point)
-        print 'path = ', path_points
 #        assert occupied_points + len(path_points) == len(findOccupiedPoints())
 
         if current_point == end:
@@ -243,28 +258,31 @@ def findPossiblePath(start, end, grid2):
 if __name__ == "__main__":
     shortest_paths = []
     grid = grid.createGrid()
-#    netlist = [netlist[0], netlist[1], netlist[2], netlist[3], netlist[4]]
-    netlist = [netlist[5]]
+#    netlist = [netlist[0], netlist[1], netlist[2], netlist[3], netlist[4], netlist[5]]
+    netlist = [netlist[i] for i in range(11)]
     for net in netlist:
         path = []
         start, end = chips[net[0]], chips[net[1]]
         print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
         original_value_start, original_value_end = isFree(start), isFree(end)
-        while len(path) < 3:
+        while len(path) < 1:
             try:
                 path, grid = findPossiblePath(start, end, grid)
                 break
             except PathLengthError:
+                break
                 setOccupation(start, original_value_start)
                 setOccupation(end, original_value_end)
+                print "Occupation is changed"
                 print 'PathLengthError'
 
         shortest_paths.append(path)
 
 
-    print "The total wire length is %i and there are %i intersections of which there are %i on the chips" % (
-        calculateWireLenght(shortest_paths),
-        checkIntsections(shortest_paths), doubleStartEndPoints(netlist))
+    print "The number of complete paths should be %i, the actual number of complete paths is %i " % (len(netlist), len(shortest_paths))
+ #   print "The total wire length is %i and there are %i intersections of which there are %i on the chips" % (
+  #      calculateWireLenght(shortest_paths),
+   #     checkIntersections(shortest_paths), doubleStartEndPoints(netlist))
     print shortest_paths
     layer = 3
     Visualization.runVisualization(shortest_paths, layer)
