@@ -15,7 +15,7 @@ Z_SIZE = data.Z_SIZE  #
 SCALE = 30
 GRID_WIDTH = X_SIZE * SCALE
 GRID_HEIGHT = Y_SIZE * SCALE
-LINE_WIDTH = 4
+LINE_WIDTH = 4  # Preferably an even number
 PADDING = 30
 
 WINDOW_WIDTH = GRID_WIDTH + 300
@@ -25,7 +25,7 @@ CHIPSIZE = CELLSIZE / 2
 
 BLUE = (0, 0, 255)            # Down color
 RED = (255, 0, 0)             # Up color
-LIGHT_GRAY = (105, 105, 105)  # Chip-color
+LIGHT_GRAY = (125, 125, 125)  # Chip-color
 DARKGRAY = (40, 40, 40)       # Grid lines color
 
 CHOCOLATE = (210, 105, 30)          # Brownish orange
@@ -39,7 +39,6 @@ PEACH_PUFF = (255, 218, 185)        # Light orange pinky
 VIOLET = (238, 130, 238)            # Pink/violet
 SADDLE_BROWN = (139, 69, 19)        # Brown
 LIME_GREEN = (50, 205, 50)          # Not-so-bright green
-
 
 COLOR_DOWN = BLUE
 COLOR_UP = RED
@@ -141,6 +140,8 @@ def drawLine(pathpoints, layer_number, index):
                 pygame.draw.circle(DISPLAYSURF, line_color, path[0], 5, 0)
             if len(path) > 1:
                 pygame.draw.lines(DISPLAYSURF, line_color, False, path, LINE_WIDTH)
+                for point in path:  # Purely for aesthetic reasons, the edges of the lines are now rounded
+                    pygame.draw.circle(DISPLAYSURF, line_color, (point[0]+1, point[1]+1), LINE_WIDTH/2, 0)
             path = []
 
         try:  # See if this point went up or down
@@ -166,6 +167,8 @@ def drawLine(pathpoints, layer_number, index):
             pygame.draw.circle(DISPLAYSURF, line_color, path[0], 5, 0)
         if len(path) > 1:
             pygame.draw.lines(DISPLAYSURF, line_color, False, path, LINE_WIDTH)
+            for point in path:  # Purely for aesthetic reasons, the edges of the lines are now rounded
+                pygame.draw.circle(DISPLAYSURF, line_color, (point[0]+1, point[1]+1), LINE_WIDTH/2, 0)
 
 
 def drawPaths(paths, layer_number):
