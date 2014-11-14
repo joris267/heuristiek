@@ -3,6 +3,7 @@ import data
 import operator
 import itertools
 import random
+import algoritme_j as algoritme
 
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
@@ -63,8 +64,8 @@ def sortDistance(netlist):
 grid = createGrid()
 
 if __name__ == "__main__":
-    print connectionsPerChip(data.netlist)
-    print endpointsChips(data.netlist)
+    print algoritme.connectionsPerChip(data.netlist)
+    print algoritme.endpointsChips(data.netlist)
 
     # sortDistance(netlist)
     # findShortestPath((1,1,3),(9,4,3))

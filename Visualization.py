@@ -1,5 +1,4 @@
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
-
 import data as data
 import pygame
 

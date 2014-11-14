@@ -1,12 +1,13 @@
 import numpy as np
 import random
-import data
+import data_test as data
 import Visualization
-import grid
+import grid_copy as grid
 import itertools
 
 netlist = data.netlist
 chips = data.chips
+#layer = Visualization.layer
 
 class PathLengthError(Exception):
     def __init__(self):
@@ -38,6 +39,7 @@ def checkIntsections(path_list):
 def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     """
     Find the number of double start/end points, that is, the sum of al occurrences higher then 1.
+
     """
     som = 0
     if chip_to_occurrences is None:
@@ -46,10 +48,12 @@ def doubleStartEndPoints(netlist, chip_to_occurrences=None):
         for i in occurrences:
             if i > 1:
                 som += i
+
     else:
         for i in chip_to_occurrences.values():
             if i > 1:
                 som += 1
+
     return som
 
 def isFree(point):
@@ -62,13 +66,13 @@ def isFree(point):
             return False
     try:
         value = grid[point[0]][point[1]][point[2]]
-      #  print value
+    # print value
     except:
         print "point ", point, "lies outside of grid"
         return False
     return value
 
-def setOccupation(point, occupation=False):
+def setOccupation(point, occupation = False):
     """
     For a given point changes it's value in the grid to the given occupation.
     Returns nothing.
@@ -186,17 +190,15 @@ def findPossiblePath(start, end, grid2):
     path_points = [start]
     path_found = False
     current_point = start
-    print 'point = ', current_point
 
     while not path_found:
         # print "path: ", path_points
 
-        if len(path_points) > 100:
-            print "path too long"
+        if len(path_points) > 50:
+            print "path to long"
             for point in path_points:
                 setOccupation(point, True)
-            findPossiblePath(start, end, grid)
-#            raise PathLengthError()
+            raise PathLengthError()
 
         # randomizes the order in which a path wil be sought in the x, y and z direction
         dimensions = 2
@@ -222,17 +224,15 @@ def findPossiblePath(start, end, grid2):
         # print len(findOccupiedPoints())
 #        assert occupied_points + len(path_points) == len(findOccupiedPoints())
         if last_point == current_point:
- #           findPossiblePath(start, end, grid, path_points)
             free_neighbours = freeNeighbour(current_point)
             if len(free_neighbours) == 0:
-                print "stuck: try again"
-                #return findPossiblePath(start, end, grid)
+                print "stuck"
                 return path_points, grid
 
             current_point = random.choice(free_neighbours)
             path_points.append(current_point)
             setOccupation(current_point)
-        print 'path = ', path_points
+
 #        assert occupied_points + len(path_points) == len(findOccupiedPoints())
 
         if current_point == end:
@@ -243,8 +243,6 @@ def findPossiblePath(start, end, grid2):
 if __name__ == "__main__":
     shortest_paths = []
     grid = grid.createGrid()
-#    netlist = [netlist[0], netlist[1], netlist[2], netlist[3], netlist[4]]
-    netlist = [netlist[5]]
     for net in netlist:
         path = []
         start, end = chips[net[0]], chips[net[1]]
@@ -257,14 +255,13 @@ if __name__ == "__main__":
             except PathLengthError:
                 setOccupation(start, original_value_start)
                 setOccupation(end, original_value_end)
-                print 'PathLengthError'
 
         shortest_paths.append(path)
 
 
-    print "The total wire length is %i and there are %i intersections of which there are %i on the chips" % (
+    print "The total wire length is %i and there are %i intersections of which there are %i on the endpoints" % (
         calculateWireLenght(shortest_paths),
         checkIntsections(shortest_paths), doubleStartEndPoints(netlist))
     print shortest_paths
-    layer = 3
+    layer=3
     Visualization.runVisualization(shortest_paths, layer)

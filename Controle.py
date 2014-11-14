@@ -1,3 +1,5 @@
+from algoritme_j import *
+import Visualization
 
 def findShortestPath(start, end):
     """
@@ -19,14 +21,14 @@ def findShortestPath(start, end):
     conflicts = []
 
     for i in range(x_end - x_start + 1):
-        if isOccupied((i, y_start, z)):
+        if isFree((i, y_start, z)):
             conflicts.append(i)
         path_points.append((x_start + i, y_start, start[2]))
 
     if y_end != y_start:
         direction = (y_end - y_start) / abs(y_end - y_start)  # -1 or 1
         for j in range(0, y_end - y_start + direction, direction):
-            if isOccupied((x_end, y_start + j, z)):
+            if isFree((x_end, y_start + j, z)):
                 conflicts.append(j)
             path_points.append((x_end, y_start + j, end[2]))
 
@@ -53,9 +55,18 @@ def checkIntsections(path_list):
     Returns the number of intersections in the path
     """
     joined_list = list(itertools.chain.from_iterable(path_list))
-    unique_points = len(set(joined_list))
-    total_points = len(joined_list)
-    return total_points - unique_points
+    unique_points = set(joined_list)
+    doubles = 0
+
+    for unique_point in unique_points:
+        count = 0
+        for point in joined_list:
+            if unique_point == point:
+                count += 1
+        if count > 1:
+            doubles += count
+
+    return doubles
 
 
 def connectionsPerChip(netlist):
@@ -86,6 +97,8 @@ def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     if chip_to_occurrences is None:
         chips_in_netlist = list(itertools.chain.from_iterable(netlist))
         occurrences = np.bincount(chips_in_netlist)
+        print netlist, chips_in_netlist
+        print occurrences
         for i in occurrences:
             if i > 1:
                 som += i
@@ -93,7 +106,7 @@ def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     else:
         for i in chip_to_occurrences.values():
             if i > 1:
-                som += 1
+                som += i
 
     return som
 
@@ -132,3 +145,32 @@ def theoreticalShortestPaths(netlist):
         shortest_paths.append(findShortestPath(start, end))
 
     return shortest_paths
+
+def areNeighbours(point1, point2):
+    distance = 0
+    for dimension in range(3):
+        distance += (point1[dimension] - point2[dimension])**2
+    distance = distance**.5
+    print point1, point2, distance
+    return distance == 1
+
+def smoothenPath(path):
+    print path
+    for  i in range(len(path)):
+        for j  in range(i+2, len(path)):
+            if areNeighbours(path[i], path[j]):
+                return smoothenPath(path[:i+1] + path[j:])  # plus 1 to include endpoint
+    return path
+
+if __name__ == "__main__":
+    #example where line becomes a lot shorter by smoothgening it
+    path = [(4, 1, 3), (4, 1, 4), (4, 1, 3), (4, 0, 3), (3, 0, 3), (3, 1, 3), (3, 2, 3), (2, 2, 3), (2, 1, 3),
+            (1, 1, 3), (1, 2, 3), (1, 2, 4), (1, 1, 4), (2, 1, 4), (3, 1, 4), (3, 1, 5), (4, 1, 5), (5, 1, 5),
+            (5, 1, 4), (5, 1, 3), (5, 2, 3), (5, 3, 3), (5, 3, 4), (4, 3, 4), (4, 2, 4), (3, 2, 4), (3, 3, 4),
+            (3, 3, 3), (2, 3, 3), (1, 3, 3), (1, 4, 3)]
+
+    path_list = [path, smoothenPath(path)]
+    print "length", len(path_list[0])
+    print "smoothed length", len(path_list[1])
+    # print path_list
+    Visualization.runVisualization(path_list)
