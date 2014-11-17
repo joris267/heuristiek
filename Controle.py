@@ -1,5 +1,8 @@
 from algoritme_j import *
+import data
 import Visualization
+
+netlist = data.netlist
 
 def findShortestPath(start, end):
     """
@@ -163,14 +166,16 @@ def smoothenPath(path):
     return path
 
 if __name__ == "__main__":
-    #example where line becomes a lot shorter by smoothgening it
+    #example where line becomes a lot shorter by smoothening it
     path = [(4, 1, 3), (4, 1, 4), (4, 1, 3), (4, 0, 3), (3, 0, 3), (3, 1, 3), (3, 2, 3), (2, 2, 3), (2, 1, 3),
             (1, 1, 3), (1, 2, 3), (1, 2, 4), (1, 1, 4), (2, 1, 4), (3, 1, 4), (3, 1, 5), (4, 1, 5), (5, 1, 5),
             (5, 1, 4), (5, 1, 3), (5, 2, 3), (5, 3, 3), (5, 3, 4), (4, 3, 4), (4, 2, 4), (3, 2, 4), (3, 3, 4),
             (3, 3, 3), (2, 3, 3), (1, 3, 3), (1, 4, 3)]
 
-    path_list = [path, smoothenPath(path)]
-    print "length", len(path_list[0])
-    print "smoothed length", len(path_list[1])
+    # path_list = [path, smoothenPath(path)]
+    # print "length", len(path_list[0])
+    # print "smoothed length", len(path_list[1])
     # print path_list
-    Visualization.runVisualization(path_list)
+    print connectionsPerChip(netlist)
+    print len(netlist)
+   #  Visualization.runVisualization(path_list)

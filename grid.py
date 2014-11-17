@@ -18,7 +18,7 @@ def createGrid():
     will assume chips are on layer 3 unless other int is given
     imports chips, X_SIZE, Y_SIZE and Z_SIZE from visualization
     """
-    grid = np.ones(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=bool)
+    grid = np.ones(shape=(X_SIZE+1, Y_SIZE+1, Z_SIZE+1), dtype=bool)
     for chip in chips:
         grid[chip[0]][chip[1]][chip[2]] = False
     return grid
@@ -46,7 +46,7 @@ def sortDistance(netlist):
     netlist_dictionary = {}
     for i in range(len(netlist)):
         start = chips[netlist[i][0]]
-        end = chips[netlist[i][1]]
+        end = chips[netlist[i][0]]
 
         delta_x = abs(start[0]-end[0])
         delta_y = abs(start[1]-end[1])
