@@ -4,7 +4,6 @@ import data
 import Visualization
 import grid
 import itertools
-import operator
 
 netlist = data.netlist
 chips = data.chips
@@ -12,29 +11,6 @@ chips = data.chips
 class PathLengthError(Exception):
     def __init__(self):
         pass
-
-def sortDistance(netlist):
-    """
-    For a given netlist calculates the distances between the given to be connected chips. Then returns
-    the netlist sorted by distance (shortes distance first).
-    """
-    netlist_dictionary = {}
-    for i in range(len(netlist)):
-        start = chips[netlist[i][0]]
-        end = chips[netlist[i][1]]
-
-        delta_x = abs(start[0]-end[0])
-        delta_y = abs(start[1]-end[1])
-        distance = delta_x + delta_y
-
-        netlist_dictionary[(netlist[i][0], netlist[i][1])] = distance
-
-    sorted_dictionary = sorted(netlist_dictionary.items(), key=operator.itemgetter(1))
-    sorted_netlist = []
-    for j in range(len(sorted_dictionary)):
-        sorted_netlist.append(sorted_dictionary[j][0])
-
-    return sorted_netlist
 
 def calculateWireLenght(path_list):
     """
@@ -93,7 +69,6 @@ def isFree(point):
     except:
         print "point ", point, "lies outside of grid"
         value = False
-
     return value
 
 def setOccupation(point, occupation=False):
@@ -179,13 +154,14 @@ def freeNeighbour(point):
     neighbours = []
     for dimension in range(3):
         for direction in range(-1, 2, 2):
+
             #if on top layer, you cant go up
             if point[2] == 7:
-                if direction == 1 and dimension == 2:
+                if direction == 1 and dimension == 3:
                     continue
             #if bottom you cant go down
             elif point[2] == 0:
-                if direction == -1 and dimension == 2:
+                if direction == -1 and dimension == 3:
                     continue
 
             list_point = list(point)
@@ -193,385 +169,120 @@ def freeNeighbour(point):
             neighbour = tuple(list_point)
             if isFree(neighbour):
                 neighbours.append(neighbour)
-
     return neighbours
+
 
 def findOccupiedPoints():
     occupied_points = []
     for z in range(len(grid[0][0])):
         for y in range(len(grid[0])):
             for x in range(len(grid)):
-                if not isFree((x, y, z)):
-                    occupied_points.append((x, y, z))
+                if not isFree((x,y,z)):
+                    occupied_points.append((x,y,z))
 
     # print len(occupied_points), len([1 for  z in grid for y in z for x in y if not x])
     return occupied_points
 
-def checkDirection(neighbour, current_point, end):
-    """
-    Returns True if the neighbour point is in the direction of the endpoint
-    """
-
-    for i in range(3):
-        delta = abs(end[i] - current_point[i])
-        if abs(end[i] - neighbour[i]) < delta and delta >= 0:
-            return True, i
-
-    return False, None
-
-def checkDimension(neighbour, current_point):
-    """
-    Returns True if the neighbour point is in the direction of the endpoint
-    """
-    for i in range(3):
-        delta = abs(neighbour[i] - current_point[i])
-        if delta > 0:
-            return i
-
-def areNeighbours(point1, point2):
-    distance = 0
-    for dimension in range(3):
-        distance += (point1[dimension] - point2[dimension])**2
-    distance = distance**.5
-#    print point1, point2, distance
-    return distance == 1
-
-def smoothenPath(path):
-    for i in range(len(path)):
-        for j in range(i+2, len(path)):
-            if areNeighbours(path[i], path[j]):
-                return smoothenPath(path[:i+1] + path[j:])  # plus 1 to include endpoint
-
-    return path
-
-# def makePathGrid(shortest_paths):
-#
-#
-#
-# def relayPaths(shortest_paths):
-#
-#     grid_located = makePathGrid(shortest_paths)
 
 
-def checkConnections(first_point, second_point, path):
-
-    current_length = len(path)
-    #check if the points are on one line
-    delta_x = abs(max(first_point[0], second_point[0]) - min(first_point[0], second_point[0]))
-    delta_y = abs(max(first_point[1], second_point[1]) - min(first_point[1], second_point[1]))
-    delta_z = abs(max(first_point[2], second_point[2]) - min(first_point[2], second_point[2]))
-
-    # delta_x = abs(first_point[0] - second_point[0])
-    # delta_y = abs(first_point[1] - second_point[1])
-    # delta_z = abs(first_point[2] - second_point[2])
-
-    setOccupation(second_point, True)
-
-    combo = [delta_x, delta_y, delta_z]
-    not_zero = []
-    i = 0
-    for delta in combo:
-        if delta != 0:
-            not_zero.append([delta, i])
-        i += 1
-
-
-    track = []
-    if len(not_zero) == 1:
-        # print 'look between : ', first_point, second_point
-        # print 'current path : ', path
-        delta = not_zero[0][0]
-        dimension = not_zero[0][1]  # move in x, y or z direction
-        direction = -(first_point[dimension] - second_point[dimension])/delta
-
-        if direction != 0:
-            for j in range(0, direction*(delta+2), direction):
-                check_point_list = [first_point[0], first_point[1], first_point[2]]
-                check_point_list[dimension] = check_point_list[dimension] + j
-                check_point = (check_point_list[0], check_point_list[1], check_point_list[2])
-                if isFree(check_point) or check_point in path:
-                    track.append(check_point)
-                    # print 'track = ', track
-                    if check_point == second_point and len(track) < current_length:
-                        if track != path:
-                            setOccupation(second_point, False)
-                            # print 'track returned'
-                            return track
-                        else:
-                            break
-                    else:
-                        continue
-                else:
-                    setOccupation(second_point, False)
-                    return None
-
-    setOccupation(second_point, False)
-    return None
-
-
-
-def superSmoothPath(path):
-
-    old_path = path
-    i = 0
-    print 'begin'
-    while i < len(path):
-        point = path[i]
-        j = i + 1
-        while j < len(path):
-            other_point = path[j]
-            connection_path = path[i:(j+1)]
-            connections = checkConnections(point, other_point, connection_path)
-            if connections is not None:
-                # print 'finding path between :', path[0], path[-1]
-                # print 'point : ', point, 'other_point : ', other_point
-                pre_path = path[:i]
-                post_path = path[(j+1):]
-                path = [pre_path + connections + post_path][0]
-                j = 0
-                # print "connection path old: ", connection_path
-                # print 'pre_path = ', pre_path, 'connections = ', connections, 'post_path = ', post_path, 'path = ', path
-                # # break
-            j += 1
-        i += 1
-
-    if old_path != path:
-        for point in path:
-            setOccupation(point, False)
-        for point in old_path:
-            if point not in path:
-                setOccupation(point, True)
-
-    return path
-
-#def relayPaths(shortest_paths):
-
-
-def findPath(start, end, grid2):
+def findPossiblePath(start, end, grid2):
     global grid
     grid = grid2
 
     x_start, x_end, y_start, y_end, z_start, z_end = calculateEndStart(start, end)
+    occupied_points = len(findOccupiedPoints())
 
     start = (x_start, y_start, z_start)
     end = (x_end, y_end, z_end)
     setOccupation(end, True)
 
-    directions = []
-    all_states = []
     path_points = [start]
     path_found = False
     current_point = start
-    last_point = start
-    print 'finding path between = ', start, ' and ',  end
-    dont_go_to = (-1, -1, -1)
-    counter = 0
+    print 'point = ', current_point
+
     while not path_found:
-#        print 'path = ', path_points
-        counter += 1
-        if counter == 150: # If the loop is repeated a lot, this means the path is stuck, the other paths are relayed
-            print 'stuck', len(shortest_paths)
-            return 'Error'
+        if len(path_points) > 80:
+            print "path too long"
+            for point in path_points:
+                setOccupation(point, True)
+            #return findPossiblePath(start, end, grid)
+            raise PathLengthError()
 
+        # randomizes the order in which a path wil be sought in the x, y and z direction
+        dimensions = 2
+        if current_point[2] != end[2]:
+            dimensions += 1
+        dimensions = range(dimensions)
+        random.shuffle(dimensions)
 
-        free_neighbours = freeNeighbour(current_point)
-        same_direction = False
-        in_direction = False
-        neighbours_in_direction = []
-        neighbours_other_direction = []
-
-        for neighbour in free_neighbours:
-            direction = checkDirection(neighbour, current_point, end)
-            if direction[0] and neighbour != dont_go_to: #neighbour not in all_states:
-                neighbours_in_direction.append([neighbour, direction[1]])
-            elif direction[0] is False and neighbour != dont_go_to: #and neighbour not in all_states:
-                neighbours_other_direction.append([neighbour, direction[1]])
+        # to check if there is any way in which the path can move the current point is saved and compared at the end
+        # of the search for the path in all directions
+        last_point = current_point
+        for random_dimension in dimensions:
+            if random_dimension == 0:
+                path_points, current_point = moveVertical(current_point[0], current_point[1], y_end, current_point[2], path_points)
+            elif random_dimension == 1:
+                path_points, current_point = moveHorizontal(current_point[0], x_end, current_point[1], current_point[2], path_points)
             else:
-                continue
+                path_points, current_point = moveUpDPown(current_point[0], current_point[1], current_point[2], z_end, path_points)
 
-        for neighbour in neighbours_in_direction:
-            if len(directions) == 0 or neighbour[1] == directions[-1]:
-                path_points.append(neighbour[0])
-                all_states.append(neighbour[0])
-                directions.append(neighbour[1])
-                setOccupation(neighbour[0], False)
-                current_point = neighbour[0]
-                same_direction = True
-                in_direction = True
-#                print 'print go to neighbour, next'
-                break
+        # print "path: ", path_points  # len([1 for  z in grid for y in z for x in y if not x])
+        # print findOccupiedPoints()
+        # print occupied_points, len(path_points)
+        # print len(findOccupiedPoints())
+#        assert occupied_points + len(path_points) == len(findOccupiedPoints())
+        if last_point == current_point:
+ #           findPossiblePath(start, end, grid, path_points)
+            free_neighbours = freeNeighbour(current_point)
+            if len(free_neighbours) == 0:
+                for i in range(1, len(path_points)):
+                    setOccupation(path_points[i], True)
+                del path_points
+                path_points = [start]
+                print "stuck: try again"
+#                return findPossiblePath(start, end, grid)
+                #return path_points, grid
             else:
-#                print 'try next neighbour'
-                continue
+                current_point = random.choice(free_neighbours)
+                path_points.append(current_point)
+                setOccupation(current_point)
 
-        if not same_direction and len(neighbours_in_direction) > 0:
-            step = False
-            for neighbour in neighbours_in_direction:
-#                print 'list length same direction= ', len(neighbours_in_direction)
-                if neighbour[1] < 2:
-                    path_points.append(neighbour[0])
-                    all_states.append(neighbour[0])
-                    directions.append(neighbour[1])
-                    setOccupation(neighbour[0], False)
-                    current_point = neighbour[0]
-                    in_direction = True
-                    step = True
-                    break
-                else:
-                    continue
-
-            if not step:
-                for neighbour in neighbours_in_direction:
-                    if neighbour[1] == 2:
-                        path_points.append(neighbour[0])
-                        all_states.append(neighbour[0])
-                        directions.append(neighbour[1])
-                        setOccupation(neighbour[0], False)
-                        current_point = neighbour[0]
-                        in_direction = True
-
-        if not in_direction and len(neighbours_other_direction) > 0:
-            step = False
-            i = random.randrange(len(neighbours_other_direction))
-            for neighbour in neighbours_other_direction:
-#                print 'list length = ', len(neighbours_other_direction)
-                if neighbour[1] < 2:
-                    path_points.append(neighbour[0])
-                    all_states.append(neighbour[0])
-                    directions.append(neighbour[1])
-                    setOccupation(neighbour[0], False)
-                    current_point = neighbour[0]
-                    in_direction = True
-                    step = True
-                    break
-                else:
-                    continue
-
-            if not step:
-                for neighbour in neighbours_other_direction:
-                    if neighbour[1] == 2:
-                        path_points.append(neighbour[0])
-                        all_states.append(neighbour[0])
-                        directions.append(neighbour[1])
-                        setOccupation(neighbour[0], False)
-                        current_point = neighbour[0]
-                        in_direction = True
-
-
-        if len(free_neighbours) == 0 or (len(free_neighbours) == 1 and free_neighbours[0] == dont_go_to):
-            if len(path_points) == 1:
-                print 'no possible connections'
-                return path_points, grid
-            print 'no possible neighbours'
-            dont_go_to = path_points[-1]
-            setOccupation(path_points[-1], True)
-            del path_points[-1]
-
-            current_point = path_points[-1]
-
-        print current_point
+#        assert occupied_points + len(path_points) == len(findOccupiedPoints())
 
         if current_point == end:
-#            path_points = smoothenPath(path_points)
-#            print 'path found :', path_points
-            path_points_smoothed = superSmoothPath(path_points)
-            path_found = True
-            if len(path_points) != len(path_points_smoothed):
-                print 'path found before:', len(path_points), path_points
-                print 'path found after :', len(path_points_smoothed), path_points_smoothed
-            return path_points_smoothed, grid
+            print "found: ", path_points, "occupied", findOccupiedPoints()
+            return path_points, grid
 
 
 if __name__ == "__main__":
     shortest_paths = []
     grid = grid.createGrid()
-    netlist = sortDistance(netlist)
-    print len(netlist)
-    print netlist[16]
 #    netlist = [netlist[0], netlist[1], netlist[2], netlist[3], netlist[4], netlist[5]]
-    netlist = [netlist[i] for i in range(50)]
-#    netlist = [netlist[6]]
+    netlist = [netlist[i] for i in range(11)]
     for net in netlist:
         path = []
         start, end = chips[net[0]], chips[net[1]]
-        print "finding a path betweeen: ", net[0], net[1]
+        print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
         original_value_start, original_value_end = isFree(start), isFree(end)
+        while len(path) < 1:
+            try:
+                path, grid = findPossiblePath(start, end, grid)
+                break
+            except PathLengthError:
+                break
+                setOccupation(start, original_value_start)
+                setOccupation(end, original_value_end)
+                print "Occupation is changed"
+                print 'PathLengthError'
 
-        path, grid = findPath(start, end, grid) #findPossiblePath(start, end, grid)
         shortest_paths.append(path)
 
+
     print "The number of complete paths should be %i, the actual number of complete paths is %i " % (len(netlist), len(shortest_paths))
-#    print "The total wire length is %i and there are %i intersections of which there are %i on the chips" % (
- #       calculateWireLenght(shortest_paths),
-  #      checkIntersections(shortest_paths), doubleStartEndPoints(netlist))
-    layer = 0
+ #   print "The total wire length is %i and there are %i intersections of which there are %i on the chips" % (
+  #      calculateWireLenght(shortest_paths),
+   #     checkIntersections(shortest_paths), doubleStartEndPoints(netlist))
+    print shortest_paths
+    layer = 3
     Visualization.runVisualization(shortest_paths, layer)
-
-
-# def findPossiblePath(start, end, grid2):
-#     global grid
-#     grid = grid2
-#
-#     x_start, x_end, y_start, y_end, z_start, z_end = calculateEndStart(start, end)
-#     occupied_points = len(findOccupiedPoints())
-#
-#     start = (x_start, y_start, z_start)
-#     end = (x_end, y_end, z_end)
-#     setOccupation(end, True)
-#
-#     directions = []
-#     path_points = [start]
-#     path_found = False
-#     current_point = start
-#     print 'point = ', current_point
-#
-#     while not path_found:
-#         if len(path_points) > 80:
-#             print "path too long"
-#             for point in path_points:
-#                 setOccupation(point, True)
-#             #return findPossiblePath(start, end, grid)
-#             raise PathLengthError()
-#
-#         # randomizes the order in which a path wil be sought in the x, y and z direction
-#         dimensions = 2
-#         if current_point[2] != end[2]:
-#              dimensions += 1
-#         dimensions = range(dimensions)
-#         random.shuffle(dimensions)
-#
-#         # to check if there is any way in which the path can move the current point is saved and compared at the end
-#         # of the search for the path in all directions
-#         last_point = current_point
-#
-#         # for random_dimension in dimensions:
-#         #     directions.append(random_dimension)
-#         random_dimension = random.randrange(2)
-#         if random_dimension == 0:
-#             path_points, current_point = moveVertical(current_point[0], current_point[1], y_end, current_point[2], path_points)
-#         elif random_dimension == 1:
-#             path_points, current_point = moveHorizontal(current_point[0], x_end, current_point[1], current_point[2], path_points)
-#         else:
-#             path_points, current_point = moveUpDPown(current_point[0], current_point[1], current_point[2], z_end, path_points)
-#
-#
-#         if last_point == current_point:
-#             free_neighbours = freeNeighbour(current_point)
-#             if len(free_neighbours) == 0:
-#                 for i in range(1, len(path_points)):
-#                     setOccupation(path_points[i], True)
-#                 del path_points
-#                 path_points = [start]
-#                 print "stuck: try again"
-# #                return findPossiblePath(start, end, grid)
-#                 #return path_points, grid
-#             else:
-#                 current_point = random.choice(free_neighbours)
-#                 path_points.append(current_point)
-#                 setOccupation(current_point)
-#
-# #       assert occupied_points + len(path_points) == len(findOccupiedPoints())
-#
-#         if current_point == end:
-#             print "found: ", path_points, "occupied", findOccupiedPoints()
-#             return path_points, grid
