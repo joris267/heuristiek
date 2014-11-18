@@ -415,7 +415,7 @@ def findPaths(netlist, max_tries = 10):
         path_tries[path_number] += 1
         path = []
         try:
-            start, end = chips[net[0]], chips[net[1]]
+            start, end = chips[net[0]], chips[net[1]]  # should not give error but I had trouble with this once.
         except:
             print chips, net
             assert False
