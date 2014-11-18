@@ -328,7 +328,12 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
 
         for point in current_points:
             neighbours = findNeighbours(point)
-            value = getAStarValue(point)
+            try:
+                value = getAStarValue(point)
+            except:
+                print point
+                assert False
+
             value[0] += 1
             # print value[0]
             # print Controle.getAvrgValueAStarDistance(a_star_grid)
@@ -376,7 +381,7 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
         if best_neigbour == current_point:  # check to see if a best neighbour is found
             print current_point, value_best_neigbour
             print point1, point2
-            print [len(getAStarValue(i)[1]) for i in  findNeighbours(current_point)]
+            print [len(getAStarValue(i)[1]) for i in findNeighbours(current_point)]
             raise AstarError
         else:
             final_astar_path.append(best_neigbour)
@@ -492,5 +497,5 @@ if __name__ == "__main__":
     # print Controle.doubleConnections(netlist)
     # print min([len(i) for i in shortest_paths.values()])
     # print max([len(i) for i in shortest_paths.values()])
-    layer = 3
+    layer = 0
     Visualization.runVisualization(shortest_paths.values(), layer)

@@ -1,3 +1,4 @@
+__author__ = 'Marcella Wijngaarden'
 import numpy as np
 import random
 import data
@@ -507,71 +508,3 @@ if __name__ == "__main__":
     layer = 0
     Visualization.runVisualization(shortest_paths, layer)
 
-
-# def findPossiblePath(start, end, grid2):
-#     global grid
-#     grid = grid2
-#
-#     x_start, x_end, y_start, y_end, z_start, z_end = calculateEndStart(start, end)
-#     occupied_points = len(findOccupiedPoints())
-#
-#     start = (x_start, y_start, z_start)
-#     end = (x_end, y_end, z_end)
-#     setOccupation(end, True)
-#
-#     directions = []
-#     path_points = [start]
-#     path_found = False
-#     current_point = start
-#     print 'point = ', current_point
-#
-#     while not path_found:
-#         if len(path_points) > 80:
-#             print "path too long"
-#             for point in path_points:
-#                 setOccupation(point, True)
-#             #return findPossiblePath(start, end, grid)
-#             raise PathLengthError()
-#
-#         # randomizes the order in which a path wil be sought in the x, y and z direction
-#         dimensions = 2
-#         if current_point[2] != end[2]:
-#              dimensions += 1
-#         dimensions = range(dimensions)
-#         random.shuffle(dimensions)
-#
-#         # to check if there is any way in which the path can move the current point is saved and compared at the end
-#         # of the search for the path in all directions
-#         last_point = current_point
-#
-#         # for random_dimension in dimensions:
-#         #     directions.append(random_dimension)
-#         random_dimension = random.randrange(2)
-#         if random_dimension == 0:
-#             path_points, current_point = moveVertical(current_point[0], current_point[1], y_end, current_point[2], path_points)
-#         elif random_dimension == 1:
-#             path_points, current_point = moveHorizontal(current_point[0], x_end, current_point[1], current_point[2], path_points)
-#         else:
-#             path_points, current_point = moveUpDPown(current_point[0], current_point[1], current_point[2], z_end, path_points)
-#
-#
-#         if last_point == current_point:
-#             free_neighbours = freeNeighbour(current_point)
-#             if len(free_neighbours) == 0:
-#                 for i in range(1, len(path_points)):
-#                     setOccupation(path_points[i], True)
-#                 del path_points
-#                 path_points = [start]
-#                 print "stuck: try again"
-# #                return findPossiblePath(start, end, grid)
-#                 #return path_points, grid
-#             else:
-#                 current_point = random.choice(free_neighbours)
-#                 path_points.append(current_point)
-#                 setOccupation(current_point)
-#
-# #       assert occupied_points + len(path_points) == len(findOccupiedPoints())
-#
-#         if current_point == end:
-#             print "found: ", path_points, "occupied", findOccupiedPoints()
-#             return path_points, grid
