@@ -41,6 +41,7 @@ netlist = [(0, 13),
            (7, 23),
            (10, 0),
            (10, 1),
+<<<<<<< HEAD
            (8, 1),                         # toegevoegd
            (7, 5),                         # toegevoegd
            (12, 14),                   # toegevoegd
@@ -48,6 +49,10 @@ netlist = [(0, 13),
            (8, 10),
 ##           (10, 18),               Dubbel, beiden weg want allebei
 ##           (10, 18),              teveel connecties
+=======
+           (10, 18),
+           (10, 18),
+>>>>>>> origin/master
            (11, 0),
            (11, 17),
            (11, 3),
