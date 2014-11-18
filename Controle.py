@@ -88,6 +88,32 @@ def connectionsPerChip(netlist):
     return chip_to_occurrences
 
 
+def doubleConnections(netlist):
+    doubles = []
+    for net in netlist:
+        occurces = 0
+        reversed_net = (net[1], net[0])
+        for net2 in netlist:
+            if net == net2 or reversed_net == net2:
+                occurces += 1
+        if occurces > 1:
+            doubles.append(net)
+    return doubles
+
+
+def getAvrgValueAStarDistance(grid):
+    total = 0
+    points = 0
+    for i in grid:
+        for j in i:
+            for k in j:
+                points += 1
+                total += k[0]  # k is the value containing [distance, [intersections]]
+    return total / float(points)
+
+
+
+
 def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     """
     Find the number of double start/end points, that is, the sum of al occurrences higher then 1.
@@ -151,11 +177,9 @@ def areNeighbours(point1, point2):
     for dimension in range(3):
         distance += (point1[dimension] - point2[dimension])**2
     distance = distance**.5
-    print point1, point2, distance
     return distance == 1
 
 def smoothenPath(path):
-    print path
     for  i in range(len(path)):
         for j  in range(i+2, len(path)):
             if areNeighbours(path[i], path[j]):

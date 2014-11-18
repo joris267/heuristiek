@@ -1,5 +1,5 @@
 import numpy as np
-import data
+import data as data
 import operator
 import itertools
 import random
@@ -15,13 +15,22 @@ netlist = data.netlist
 def createGrid():
     """
     creates an grid filled with True except on the points in chips
-    will assume chips are on layer 3 unless other int is given
-    imports chips, X_SIZE, Y_SIZE and Z_SIZE from visualization
+    imports chips, X_SIZE, Y_SIZE and Z_SIZE from data
     """
     grid = np.ones(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=bool)
     for chip in chips:
         grid[chip[0]][chip[1]][chip[2]] = False
     return grid
+
+
+def createPathGrid():
+    """
+    Creates a grid filled with -1 to keep track of which paths are where.
+    imports chips, X_SIZE, Y_SIZE and Z_SIZE from data
+    """
+    path_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=int)
+    path_grid.fill(-1)
+    return path_grid
 
 def isOccupied(point):
     """
