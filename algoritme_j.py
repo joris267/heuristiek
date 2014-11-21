@@ -190,7 +190,7 @@ def freeNeighbour(point):
 
 
 def inGrid(point):
-    return (0 < point[0] < X_SIZE) and (0 < point[1] < Y_SIZE) and (0 < point[2] <Z_SIZE)
+    return (0 <= point[0] < X_SIZE) and (0 <= point[1] < Y_SIZE ) and (0 <= point[2] < Z_SIZE)
 
 
 def findNeighbours(point):
@@ -222,7 +222,7 @@ def findOccupiedPoints():
 
 
 
-def findPossiblePath(point1, point2, max_path_length = 80):
+def findPossiblePath(point1, point2, max_path_length = 60):
     """
     Finds a path between two points. Tries to move from one points towards the other point in the x, y and z directions.
     If this is not possible it moves to a random unoccupied neighbour. If there are no Free neighbours it raises a Stuckerror
@@ -291,7 +291,7 @@ def findPossiblePath(point1, point2, max_path_length = 80):
 
 
 # noinspection PyUnreachableCode
-def AStartAlgoritm(point1, point2, maxdept = 60):
+def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
 
 
     def setAStarValue(point, value):
@@ -309,19 +309,30 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
             raise AstarError
 
 
+    def getIntersectionValuePathLength(value_point):
+
+        point_path_length = value_point[0]
+        # intersection_value_point = len(value_point[1])
+        intersection_value_point =  0
+        for intersectiong_path in set(value_point[1]):
+            intersection_value_point += 1 + relay_list[intersectiong_path] / relay_badnes
+
+        return intersection_value_point, point_path_length
+
     a_star_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=list)
     #grid is filled with list [number, set with conflicts]
-    a_star_grid.fill([maxdept,range(maxdept)])  # try to improve so have to start with global worse case senario
+    a_star_grid.fill([maxdept,range(len(netlist))])  # try to improve so have to start with global worse case senario
 
     temp_current_points = [point1]
     setAStarValue(point1, [0,[]])
     setOccupation(point2, True)
     setOccupation(point1, True)
+
+    # On the start and end points the intersections don't count
     setPathOccupation(point1, -1)
     setPathOccupation(point2, -1)
 
     for itteration in range(maxdept):
-        current_points = set(temp_current_points)
         # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(current_points))
         current_points = set(temp_current_points)
         temp_current_points = []
@@ -334,30 +345,27 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
                 print point
                 assert False
 
-            value[0] += 1
-            # print value[0]
-            # print Controle.getAvrgValueAStarDistance(a_star_grid)
-            # print value
+            value[0] += 1  # taking a step
             for neighbour in neighbours:
                 AStar_value = copy.deepcopy(value)
-                # print AStar_value, value
-                current_value_neighbour = getAStarValue(neighbour)
 
                 if not isFree(neighbour):
-                    # print "not free", AStar_value, value
                     intersectiong_path = getPathOccupation(neighbour)
                     if intersectiong_path == -1:
                         if neighbour == point2:
                             assert False
                         else:
                             pass  # if a point is not free but intersection is -1 then it is a chip
+
                     AStar_value[1].append(intersectiong_path)
-                    # print "after not free", AStar_value, value
-                    # assert False
-                if len(set(AStar_value[1])) < len(set(current_value_neighbour[1])):
+
+                # has to be here becouse intersections happens just above
+                intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(AStar_value)
+                intersection_value_neighbour, path_length_neighbour = getIntersectionValuePathLength(getAStarValue(neighbour))
+                if intersection_value_neighbour > intersection_value_current_point:  # so if move gives a better result
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
-                elif len(set(AStar_value[1])) == len(set(current_value_neighbour[1])) and AStar_value[0] < current_value_neighbour[0]:
+                elif intersection_value_neighbour == intersection_value_current_point and path_length_neighbour > path_length_current_point:
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
                 # print getAStarValue(neighbour)
@@ -368,20 +376,22 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
     current_point = point2
     best_neigbour = current_point
     while current_point != point1:
-        value_best_neigbour = getAStarValue(current_point)  # at the start the best position is the starting position
-        # print "finding my way back from %s which has a value of %s" %(str(current_point), str(value_best_neigbour))
+        intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(getAStarValue(current_point))
 
         for neighbour in findNeighbours(current_point):
-            value_neighbour = getAStarValue(neighbour)
-            if len(set(value_neighbour[1])) < len(set(value_best_neigbour[1])):
+            intersection_value_neighbour, neighbour_path_length =  getIntersectionValuePathLength(getAStarValue(neighbour))
+
+            if intersection_value_neighbour < intersection_value_current_point:
                 best_neigbour = neighbour
-            elif len(set(value_neighbour[1])) == len(set(value_best_neigbour[1])) and value_neighbour[0] < value_best_neigbour[0]:
+            elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length < path_length_current_point:
                 best_neigbour = neighbour
 
         if best_neigbour == current_point:  # check to see if a best neighbour is found
-            print current_point, value_best_neigbour
+            print current_point
+            print len(getAStarValue(current_point)[1]), getAStarValue(current_point)[0]
             print point1, point2
-            print [len(getAStarValue(i)[1]) for i in findNeighbours(current_point)]
+            print [(len(getAStarValue(i)[1]), getAStarValue(i)[0]) for i in findNeighbours(current_point)]
+
             raise AstarError
         else:
             final_astar_path.append(best_neigbour)
@@ -394,10 +404,12 @@ def AStartAlgoritm(point1, point2, maxdept = 60):
     if -1 in conflicting_paths:
         conflicting_paths.remove(-1)
 
+    for path_number in conflicting_paths:
+        relay_list[path_number] += 1
     return final_astar_path, conflicting_paths
 
 
-def findPaths(netlist, max_tries = 10):
+def findPaths(netlist, max_tries = 0):
     """
     Tries to find the paths between al the chips in netlist
     """
@@ -405,12 +417,12 @@ def findPaths(netlist, max_tries = 10):
     path_number = 0
     nets_layd = [False for net_number in range(len(netlist))]
     original_netlist = copy.deepcopy(netlist)
-    i = 0
+    itteration = 0
     path_tries = [0 for _ in netlist]
     while False in nets_layd:
         assert -1 not in shortest_paths
-        i += 1
-        if i == 1000:
+        itteration += 1
+        if itteration == 1000:
             print path_tries
             break
         while nets_layd[path_number]:
@@ -427,7 +439,7 @@ def findPaths(netlist, max_tries = 10):
         # print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
         original_value_start, original_value_end = isFree(start), isFree(end)
 
-        print "finding a path between %s and %s" %(start, end)
+        print "finding a path between %s and %s at the moment I have layed %i paths and am at itteration %i" %(start, end, len([i for i in nets_layd if i]), itteration)
         for _ in range(max_tries):
             try:
                 path, grid = findPossiblePath(start, end)
@@ -448,7 +460,7 @@ def findPaths(netlist, max_tries = 10):
             nets_layd[path_number] = True
 
         else:
-            print "path not found, trying Astar algorithm"
+            # print "path not found, trying Astar algorithm"
             path, conflicting_paths = AStartAlgoritm(start, end)
             try:
                 conflicting_paths.remove(path_number)
@@ -485,10 +497,11 @@ if __name__ == "__main__":
     Y_SIZE = Data.Y_SIZE
     Z_SIZE = Data.Z_SIZE
     netlist = Data.netlist
+    netlsit = Grid.sortDistance(netlist)
     chips = Data.chips
     path_grid = Grid.createPathGrid()
     grid = Grid.createGrid()
-
+    relay_list = [0 for i in netlist]
     print 'finding paths'
     print netlist
     shortest_paths = findPaths(netlist)
