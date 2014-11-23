@@ -1,5 +1,7 @@
-X_SIZE = 17
-Y_SIZE = 12
+import operator
+
+X_SIZE = 17+1
+Y_SIZE = 12+1
 Z_SIZE = 8
 
 chips = [(1, 1, 0), (6, 1, 0), (10, 1, 0), (15, 1, 0),
@@ -147,40 +149,42 @@ netlist_2 = [(0, 11),
              (1, 4),
              (2, 12),
              (2, 19),
-             (2, 20),
+             #(2, 20),          Beiden teveel connecties
              (3, 2),
              (3, 21),
              (3, 22),
              (4, 12),
-             (4, 12),
+             #(4, 12),
              (4, 19),
-             (4, 3),
-             (4, 4),
+             #(4, 3),           Beiden teveel connecties
+             #(4, 4),
              (4, 7),
              (5, 11),
              (5, 14),
              (5, 17),
-             (6, 16),
+             (0, 16),       # (0, 16) ipv (6, 16)
              (6, 21),
-             (6, 5),
+             (6, 5),        #!!
              (7, 11),
-             (7, 15),
+             (7, 20),           #!! (7, 20) ipv (7, 15)
+             (8, 14),         # Toegevoegd
+             (8, 18),         # Toegevoegd
              (9, 16),
              (9, 22),
              (10, 3),
-             (10, 4),
+             #(10, 4),          Beiden teveel connecties
              (11, 2),
-             (11, 24),
-             (11, 3),
-             (12, 15),
+             #(11, 24),         Beiden teveel connecties
+             #(11, 3),          Beiden teveel connecties
+             (12, 13),          #!! (12, 13) ipv (12, 15)
              (13, 15),
              (13, 16),
              (13, 4),
              (13, 9),
              (14, 2),
-             (15, 10),
-             (15, 3),
-             (15, 5),
+             (14, 10),          #!! (14, 10) ipv (15, 10)
+             #(15, 3),          Beiden teveel connecties
+             #(15, 5),
              (16, 3),
              (17, 11),
              (17, 12),
@@ -188,21 +192,21 @@ netlist_2 = [(0, 11),
              (17, 7),
              (18, 24),
              (19, 10),
-             (20, 1),
-             (20, 1),
-             (20, 1),
+             (20, 21),      # (20, 21) ipv (20, 1)
+             (20, 1),       #!!
+             #(20, 1),
              (20, 10),
-             (20, 11),
-             (20, 22),
-             (20, 4),
+             #(20, 11),         Beiden teveel connecties
+             #(20, 22),
+             #(20, 4),
              (22, 24),
-             (22, 4),
+             #(22, 4),      Beiden teveel connecties
              (22, 6),
              (23, 12),
-             (23, 20),
-             (23, 3),
+             (23, 18),      # (23, 18) ipv (23, 20)
+             (23, 6),       # (23, 6) ipv (23, 3) !!
              (24, 0),
-             (24, 15),
+             (24, 15),      #!!
              (24, 5)]
 
 netlist_3 = [(0, 12),
@@ -285,6 +289,29 @@ netlist_3 = [(0, 12),
              (23, 5),
              (23, 8),
              (23, 9)]
+
+def sortDistance(netlist):
+    """
+    For a given netlist calculates the distances between the given to be connected chips. Then returns
+    the netlist sorted by distance (shortes distance first).
+    """
+    netlist_dictionary = {}
+    for i in range(len(netlist)):
+        start = chips[netlist[i][0]]
+        end = chips[netlist[i][1]]
+
+        delta_x = abs(start[0]-end[0])
+        delta_y = abs(start[1]-end[1])
+        distance = delta_x + delta_y
+
+        netlist_dictionary[(netlist[i][0], netlist[i][1])] = distance
+
+    sorted_dictionary = sorted(netlist_dictionary.items(), key=operator.itemgetter(1))
+    sorted_netlist = []
+    for j in range(len(sorted_dictionary)):
+        sorted_netlist.append(sorted_dictionary[j][0])
+
+    return sorted_netlist
 
 # netlist = [(0, 13),
 #            (0, 14),
