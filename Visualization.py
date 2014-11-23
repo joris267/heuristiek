@@ -5,10 +5,10 @@ import pygame
 netlist = data.netlist  # The paths that need to be drawn
 chips = data.chips      # The chips on the grid
 
-layer = 3  # The layer that is drawn first
+layer = 0  # The layer that is drawn first
 
-X_SIZE = data.X_SIZE  #
-Y_SIZE = data.Y_SIZE  # Dimensions of the grid
+X_SIZE = data.X_SIZE-1  #
+Y_SIZE = data.Y_SIZE-1  # Dimensions of the grid
 Z_SIZE = data.Z_SIZE  #
 
 SCALE = 30
@@ -110,7 +110,7 @@ def drawGrid(layer_number):
         pygame.draw.line(DISPLAYSURF, DARKGRAY, (x, PADDING), (x, GRID_HEIGHT + PADDING))
     for y in range(PADDING, GRID_HEIGHT + CELLSIZE + PADDING, CELLSIZE):  # draw horizontal lines
         pygame.draw.line(DISPLAYSURF, DARKGRAY, (PADDING, y), (GRID_WIDTH + PADDING, y))
-    if layer_number == 3:
+    if layer_number == 0:
         for j in range(len(chips)):
             x = (chips[j][0] * CELLSIZE) - (CHIPSIZE / 2) + PADDING
             y = (chips[j][1] * CELLSIZE) - (CHIPSIZE / 2) + PADDING
