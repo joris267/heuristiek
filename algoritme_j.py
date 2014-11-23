@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import random
 import data as Data
@@ -20,6 +21,9 @@ class AstarError(Exception):
     def __init__(self):
         pass
 
+class IntersectionError(Exception):
+    def __init__(self):
+        pass
 
 def calculateWireLenght(path_list):
     """
@@ -29,7 +33,8 @@ def calculateWireLenght(path_list):
     """
     total_length = 0
     for path in path_list:
-        total_length += len(path)
+        if len(path)> 1:
+            total_length += len(path) - 1  # path bestaand uit N punten heet N - 1 ridges
     return total_length
 
 
@@ -38,10 +43,24 @@ def checkIntsections(path_list):
     Checks if there are intersections in the path.
     Returns the number of intersections in the path
     """
+    chips = [str(chip) for chip in Data.chips]
+    occurences_dict = {}
     joined_list = list(itertools.chain.from_iterable(path_list))
-    unique_points = len(set(joined_list))
-    total_points = len(joined_list)
-    return total_points - unique_points
+    for point in joined_list:
+        if str(point) in occurences_dict:
+            occurences_dict[str(point)] += 1
+        else:
+            occurences_dict[str(point)] = 1
+
+    for point in occurences_dict:
+        if occurences_dict[str(point)] > 1:
+            if point not in chips:
+                print "point", point, "is occupied by multiple lines"
+                raise IntersectionError
+
+    intersection_list = [i for i in occurences_dict.values() if i > 1]
+    total_intersectios = sum(intersection_list)
+    return total_intersectios
 
 
 def doubleStartEndPoints(netlist, chip_to_occurrences=None):
@@ -96,11 +115,13 @@ def setPathOccupation(point, path_number):
     """
     path_grid[point[0]][point[1]][point[2]] = path_number
 
+
 def getPathOccupation(point):
     """
     returns path number present on point, return -1 if no path on point
     """
     return path_grid[point[0]][point[1]][point[2]]
+
 
 def calculateEndStart(start, end):
     x_start = min([start[0], end[0]])
@@ -286,12 +307,18 @@ def findPossiblePath(point1, point2, max_path_length = 60):
             # assert occupied_points + len(path_points) == len(findOccupiedPoints()) + 1
 
         if current_point == end:
-            # print "found: ", path_points, "occupied", findOccupiedPoints()
+            if sum([1 for point in path_points if point in chips]) != 2:  # only 1 point of the path is allowed to be on a chip
+                print path_pointsf
+                print getPathOccupation((1,5,0))
+                assert False
             return path_points, grid
 
 
-# noinspection PyUnreachableCode
-def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
+def getDistance(point1, point2):
+    return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+
+
+def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 15):
 
 
     def setAStarValue(point, value):
@@ -319,7 +346,9 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
 
         return intersection_value_point, point_path_length
 
+
     a_star_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=list)
+
     #grid is filled with list [number, set with conflicts]
     a_star_grid.fill([maxdept,range(len(netlist))])  # try to improve so have to start with global worse case senario
 
@@ -332,6 +361,7 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
     setPathOccupation(point1, -1)
     setPathOccupation(point2, -1)
 
+    # print "at start itteration: ", getPathOccupation((1,5,0))
     for itteration in range(maxdept):
         # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(current_points))
         current_points = set(temp_current_points)
@@ -351,11 +381,8 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
 
                 if not isFree(neighbour):
                     intersectiong_path = getPathOccupation(neighbour)
-                    if intersectiong_path == -1:
-                        if neighbour == point2:
-                            assert False
-                        else:
-                            pass  # if a point is not free but intersection is -1 then it is a chip
+                    if intersectiong_path == -2:  # if the point is occupied by a chip we can skip it
+                        continue
 
                     AStar_value[1].append(intersectiong_path)
 
@@ -375,6 +402,9 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
     final_astar_path = [point2]
     current_point = point2
     best_neigbour = current_point
+
+    # print "when going back", getPathOccupation((1,5,0))
+
     while current_point != point1:
         intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(getAStarValue(current_point))
 
@@ -406,10 +436,15 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 10):
 
     for path_number in conflicting_paths:
         relay_list[path_number] += 1
+
+    if sum([1 for point in final_astar_path if point in chips]) != 2:  # only 1 point of the path is allowed to be on a chip
+        print final_astar_path
+        print getPathOccupation((1,5,0))
+        assert False
     return final_astar_path, conflicting_paths
 
 
-def findPaths(netlist, max_tries = 0):
+def findPaths(netlist, max_itterations = 1000, max_tries = 2):
     """
     Tries to find the paths between al the chips in netlist
     """
@@ -422,12 +457,13 @@ def findPaths(netlist, max_tries = 0):
     while False in nets_layd:
         assert -1 not in shortest_paths
         itteration += 1
-        if itteration == 1000:
+        if itteration == max_itterations:
             print path_tries
             break
         while nets_layd[path_number]:
             path_number += 1
             path_number = path_number % len(netlist)  # to keep cycling through the netlist
+
         net = netlist[path_number]
         path_tries[path_number] += 1
         path = []
@@ -437,21 +473,25 @@ def findPaths(netlist, max_tries = 0):
             print chips, net
             assert False
         # print "finding a path betweeen: ", chips[net[0]], chips[net[1]]
-        original_value_start, original_value_end = isFree(start), isFree(end)
 
         print "finding a path between %s and %s at the moment I have layed %i paths and am at itteration %i" %(start, end, len([i for i in nets_layd if i]), itteration)
+        for point in chips:
+            if getPathOccupation(point) != -2:
+                print "het is", getPathOccupation(point), point
+                assert False
+
         for _ in range(max_tries):
             try:
                 path, grid = findPossiblePath(start, end)
                 break
             except (PathLengthError, StuckError):
-                setOccupation(start, original_value_start)
-                setOccupation(end, original_value_end)
+                setOccupation(start, False)
+                setOccupation(end, False)
 
         if len(path) > 0:
             #smoothends path and corectelly sets occupation
             smoothened_path = Controle.smoothenPath(path)
-            for point in path:
+            for point in path[1:-1]:
                 if point not in smoothened_path:
                     setOccupation(point, True)
                 else:
@@ -468,7 +508,7 @@ def findPaths(netlist, max_tries = 0):
                 pass
             for conflicting_path_number in conflicting_paths:
                 conflicting_path = shortest_paths[conflicting_path_number]
-                for point in conflicting_path:
+                for point in conflicting_path[1:-1]:  # all points except the endpoints are free again
                     setOccupation(point, True)
                     setPathOccupation(point, -1)
                 shortest_paths[conflicting_path_number] = []
@@ -476,6 +516,8 @@ def findPaths(netlist, max_tries = 0):
             for point in path:
                 setOccupation(point)
                 setPathOccupation(point, path_number)
+            setPathOccupation(start, -2)
+            setPathOccupation(end, -2)
 
             shortest_paths[path_number] = path
             nets_layd[path_number] = True
@@ -483,32 +525,65 @@ def findPaths(netlist, max_tries = 0):
                 nets_layd[conflicting_path] = False
             print "path found but paths %s will have to be refound" %(conflicting_paths)
 
-
+        num_intersections = checkIntsections(shortest_paths.values())
+        allowed_intersection_netlist = []
+        for net_nummer in range(len(netlist)):
+            if nets_layd[net_nummer]:
+                allowed_intersection_netlist.append(netlist[net_nummer])
+        allowed_intersections = doubleStartEndPoints(allowed_intersection_netlist)
+        if allowed_intersections < num_intersections:
+            print "programm failed"
+            print allowed_intersections, num_intersections
+            print net, path
+            print shortest_paths
+            assert False
     print "The total wire length is %i from %i paths (from a total of %i)and there are %i intersections of which there are %i on the endpoints" % (
         calculateWireLenght(shortest_paths.values()), len([path for path in shortest_paths.values() if len(path) > 0]), len(original_netlist),
-        checkIntsections(shortest_paths.values()), doubleStartEndPoints(original_netlist))
+        num_intersections, allowed_intersections)
     print shortest_paths
     return shortest_paths
 
 
 if __name__ == "__main__":
+    # constants
+    # test = Data.e
+    # test = {0: [], 1: [(16, 7, 0), (16, 7, 1), (16, 6, 1), (16, 5, 1), (16, 4, 1), (16, 3, 1), (16, 2, 1), (16, 1, 1), (15, 1, 1), (14, 1, 1), (13, 1, 1), (12, 1, 1), (11, 1, 1), (10, 1, 1), (9, 1, 1), (8, 1, 1), (7, 1, 1), (6, 1, 1), (5, 1, 1), (4, 1, 1), (3, 1, 1), (2, 1, 1), (1, 1, 1), (1, 1, 0)], 2: [], 3: [(12, 3, 0), (12, 3, 1), (12, 4, 1), (11, 4, 1), (10, 4, 1), (10, 4, 0), (9, 4, 0), (8, 4, 0)], 4: [(14, 2, 0), (14, 1, 0), (13, 1, 0), (12, 1, 0), (11, 1, 0), (10, 1, 0)], 5: [(15, 8, 0), (15, 7, 0), (15, 6, 0), (15, 5, 0), (15, 4, 0), (15, 3, 0), (15, 2, 0), (15, 1, 0)], 6: [(1, 5, 0), (1, 4, 0), (1, 3, 0), (0, 3, 0), (0, 2, 0), (0, 1, 0), (0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0), (4, 0, 0), (5, 0, 0), (6, 0, 0), (7, 0, 0), (8, 0, 0), (9, 0, 0), (10, 0, 0), (11, 0, 0), (12, 0, 0), (13, 0, 0), (14, 0, 0), (15, 0, 0), (15, 1, 0)], 7: [], 8: [], 9: [(16, 7, 0), (16, 8, 0), (16, 8, 1), (15, 8, 1), (15, 7, 1), (15, 6, 1), (15, 5, 1), (15, 4, 1), (15, 3, 1), (15, 2, 1), (14, 2, 1), (13, 2, 1), (13, 2, 0), (12, 2, 0)], 10: [(3, 2, 0), (3, 2, 1), (3, 2, 2), (3, 3, 2), (4, 3, 2), (5, 3, 2), (6, 3, 2), (7, 3, 2), (8, 3, 2), (9, 3, 2), (10, 3, 2), (11, 3, 2), (12, 3, 2), (13, 3, 2), (13, 3, 1), (13, 3, 0), (14, 3, 0), (14, 2, 0)], 11: [(6, 1, 0), (5, 1, 0), (4, 1, 0), (4, 2, 0), (3, 2, 0)], 12: [(1, 11, 0), (2, 11, 0), (3, 11, 0), (4, 11, 0), (5, 11, 0), (6, 11, 0), (7, 11, 0), (8, 11, 0), (9, 11, 0), (10, 11, 0), (10, 10, 0), (10, 9, 0), (10, 8, 0), (10, 7, 0), (10, 6, 0), (11, 6, 0), (12, 6, 0), (12, 5, 0), (12, 4, 0), (12, 3, 0)], 13: [(1, 1, 0), (1, 2, 0), (1, 2, 1), (1, 3, 1), (1, 4, 1), (1, 5, 1), (1, 5, 0), (2, 5, 0), (3, 5, 0), (4, 5, 0)], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [], 21: [], 22: [], 23: [], 24: [], 25: [], 26: [], 27: [], 28: [], 29: [], 30: [], 31: [], 32: [], 33: [], 34: [], 35: [], 36: [], 37: [], 38: [], 39: [], 40: [], 41: [], 42: [], 43: [], 44: [], 45: [], 46: [], 47: [], 48: [], 49: []}.values()
+    # chips = Data.chips
+    # print set([(net[0], net[-1]) for net in test if len(net) > 1])
+    # for net in test:
+    #     for point in net[1:-1]:
+    #         if point in chips:
+    #             print point
+    #             print net
+    # print len([1 for path in test if len(path) > 1])
+    # print checkIntsections(test)
+    # import time
+    # time.sleep(.2)
+    # assert False
+    while True: # for i in range(10):
+        X_SIZE = Data.X_SIZE
+        Y_SIZE = Data.Y_SIZE
+        Z_SIZE = Data.Z_SIZE
+        chips = Data.chips
+        netlist = Data.netlist
+        netlsit = Grid.sortDistance(netlist)
 
-    X_SIZE = Data.X_SIZE
-    Y_SIZE = Data.Y_SIZE
-    Z_SIZE = Data.Z_SIZE
-    netlist = Data.netlist
-    netlsit = Grid.sortDistance(netlist)
-    chips = Data.chips
-    path_grid = Grid.createPathGrid()
-    grid = Grid.createGrid()
-    relay_list = [0 for i in netlist]
-    print 'finding paths'
-    print netlist
-    shortest_paths = findPaths(netlist)
-    print shortest_paths
-    # print Controle.connectionsPerChip(netlist)
-    # print Controle.doubleConnections(netlist)
-    # print min([len(i) for i in shortest_paths.values()])
-    # print max([len(i) for i in shortest_paths.values()])
-    layer = 0
-    Visualization.runVisualization(shortest_paths.values(), layer)
+        path_grid = Grid.createPathGrid()
+        grid = Grid.createGrid()
+        relay_list = [0 for i in netlist]
+
+        print 'finding paths'
+        print netlist
+        shortest_paths = findPaths(netlist, 2000, 2)
+        print shortest_paths
+
+        # safe output
+        datum = time.strftime("%d-%m-%Y")
+        folder_name = Controle.create_folder("oplossingen Joris", datum)
+        lengte_oplossing = calculateWireLenght(shortest_paths.values())
+        aantal_paden_gelegd = len([path for path in shortest_paths.values() if len(path) > 0])
+        totaal_paden = len(netlist)
+        file_name = str(lengte_oplossing) + " " + str(aantal_paden_gelegd) + " vd " + str(totaal_paden)
+        Controle.write_file(folder_name, file_name, [relay_list] + [shortest_paths.values()])
+        layer = 0
+        # Visualization.runVisualization(shortest_paths.values(), layer)
