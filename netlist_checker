@@ -3,11 +3,12 @@ import numpy as np
 import data as data
 import random
 
+
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
 chips = data.chips
-netlist = data.netlist_24
+netlist = data.netlist_2
 print "original length %i"%(len(netlist))
 
 def findNeighbours(point):
@@ -169,15 +170,9 @@ if __name__ == "__main__":
     netlist = checkDouble(netlist)
     checkConnectionDensity(netlist)
     checkConenctions(netlist)
-    print len(chips)
 
+    print len(chips)
     print "there are now to few nets, %i new paths will have to be found. Bellow I'll print the number of  \
           connections per chip "%(65 - len(netlist))
     print connectionsPerChip(netlist)
-
-
-
-
-
-
-
+    print len(netlist)

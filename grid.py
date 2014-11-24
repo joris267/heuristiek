@@ -28,7 +28,7 @@ def createPathGrid():
     Creates a grid filled with -1 to keep track of which paths are where.
     imports chips, X_SIZE, Y_SIZE and Z_SIZE from data
     """
-    path_grid = np.ndarray(shape=(X_SIZE+1, Y_SIZE+1, Z_SIZE+1), dtype=int)
+    path_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=int)
     path_grid.fill(-1)
     return path_grid
 
