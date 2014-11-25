@@ -259,12 +259,9 @@ if __name__ == "__main__":
     shortest_paths = []
     grid = grid.createGrid()
 #    netlist = [netlist[0], netlist[1], netlist[2], netlist[3], netlist[4], netlist[5]]
-<<<<<<< HEAD
     netlist = [netlist[i] for i in range(35)]
 #    netlist = [netlist[6]]
-=======
     netlist = [netlist[i] for i in range(11)]
->>>>>>> origin/master
     for net in netlist:
         path = []
         start, end = chips[net[0]], chips[net[1]]

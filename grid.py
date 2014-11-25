@@ -30,6 +30,8 @@ def createPathGrid():
     """
     path_grid = np.ndarray(shape=(X_SIZE+1, Y_SIZE+1, Z_SIZE+1), dtype=int)
     path_grid.fill(-1)
+    for chip in chips:
+        path_grid[chip[0]][chip[1]][chip[2]] = -2
     return path_grid
 
 def isOccupied(point):

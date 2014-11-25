@@ -2,13 +2,14 @@ import itertools
 import numpy as np
 import data as data
 import random
+import copy
 
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
 chips = data.chips
-netlist = data.netlist_24
-print "original length %i"%(len(netlist))
+netlist = data.netlist
+
 
 def findNeighbours(point):
     neighbours = []
@@ -75,14 +76,16 @@ def checkDouble(netlist):
             if net1 == net2 or net2 == reversed_net:
                 occurces += 1
 
-        if occurces == 2:
+
+        for _ in range(occurces - 1):
             doubles.append(net1)
-        elif occurces > 2:
-            print net1, "was found %i times and hass to be removed by hand" %(occurces)
 
     print "removing doubles: ", doubles
-    for net in set(doubles):
-        netlist.remove(net)
+    for double in doubles:
+        try:
+            netlist.remove(double)
+        except:
+            netlist.remove((double[1], double[0]))
 
     return netlist
 
@@ -124,8 +127,11 @@ def setValue(point, value):
         grid[point[0]][point[1]][point[2]] = value
 
 
-def checkConnectionDensity(netlist):
-
+def checkConnectionPerChp(netlist):
+    """
+    checks if chips have to manny connections
+    returns a list of chips that have to manny connections
+    """
     connections_dict = connectionsPerChip(netlist)
     chips_in_netlist = set(list(itertools.chain.from_iterable(netlist)))
     for chip, chip_index in zip(chips_in_netlist, range(len(chips_in_netlist))):
@@ -141,6 +147,38 @@ def checkConnectionDensity(netlist):
 
     unlayable_paths = [(chip, connections_dict[chip]) for chip in connections_dict if connections_dict[chip] > 0]
     print "chips that have unlayable connetions", unlayable_paths
+    return unlayable_paths
+
+
+
+
+def checkMacConnectionDensity(chips):
+    max_connections = 0
+
+    for chip_index in range(len(chips)):
+        free_neighbours = findNeighbours(chips[chip_index])
+        max_connections += len(free_neighbours)
+        connections = len(free_neighbours)
+        for _ in range(connections):
+            if len(free_neighbours) == 0:
+                break
+            first_step = random.choice(free_neighbours)
+            setValue(first_step, chip_index)
+            free_neighbours.remove(first_step)
+    return max_connections
+
+def checkMacConnectionDensityPerChips(chips):
+    max_connections = [[] for _ in chips]
+
+    for chip_index in range(len(chips)):
+        free_neighbours = findNeighbours(chips[chip_index])
+        connections = len(free_neighbours)
+        max_connections[chip_index] = connections
+        for _ in range(connections):
+            first_step = random.choice(free_neighbours)
+            setValue(first_step, chip_index)
+            free_neighbours.remove(first_step)
+    return max_connections
 
 
 # def checkMaxConnectionDensity(netlist):
@@ -160,24 +198,70 @@ def checkConnectionDensity(netlist):
 #     unlayable_paths = [(chip, connections_dict[chip]) for chip in connections_dict if connections_dict[chip] > 0]
 #     print "chips that have unlayable connetions", unlayable_paths
 
+def remove_overloads(netlist):
+    connections_overload = checkConnectionPerChp(netlist)
+    netlist_temp = copy.deepcopy(netlist)
+    for chip, overload in connections_overload :
+        nets_to_remove = []
+        for net in nets_to_remove:
+            netlist_temp.remove(net)
+        for _ in range(overload):
+            for net in netlist_temp:
+                if chip in net:
+                    nets_to_remove.append(net)
+                    break
+    for net in nets_to_remove:
+        netlist_temp.remove(net)
+    netlist = netlist_temp
+    return  netlist
 
 
+def findValidNets(N):
+    valid_nets = []
+
+    for i in range(N):
+        start = random.choice(open_chips)
+        for i in range(20):  # max tries to find a open path
+            end = random.choice(open_chips)
+            if end != start:
+                break
+
+        open_chips[start] -= 1
+        open_chips[end] -= 1
+
+        valid_nets.append((start,end))
+
+    return valid_nets
 
 if __name__ == "__main__":
+    number_of_nets = 50
+    grid = createGrid()
+    print "maximum number of connections = %i"%(checkMacConnectionDensity(chips)/2)
     grid = createGrid()
     netlist = checkBeginIsEnd(netlist)
     netlist = checkDouble(netlist)
-    checkConnectionDensity(netlist)
+    netlist = remove_overloads(netlist)
+
+    #remove if netlist to long
+    if len(netlist) > number_of_nets:
+        nets_to_remove = []
+        for _ in range(len(netlist) - number_of_nets):
+            nets_to_remove.append(random.choice(netlist))
+        for net in nets_to_remove:
+            netlist.remove(net)
+
+    #add if netllist to short
+    while len(netlist) < number_of_nets:
+        find_legit_net()
+        netlist.append(net)
+
+
+
     checkConenctions(netlist)
-    print len(chips)
+
 
     print "there are now to few nets, %i new paths will have to be found. Bellow I'll print the number of  \
-          connections per chip "%(65 - len(netlist))
+          connections per chip "%(number_of_nets - len(netlist))
     print connectionsPerChip(netlist)
-
-
-
-
-
 
 

@@ -20,3 +20,14 @@ def create_grid():
     return grid
 
 grid = create_grid()
+
+
+d = 6
+
+
+def peer():
+    pass
+
+
+def kaas():
+    pass

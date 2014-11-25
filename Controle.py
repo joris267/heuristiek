@@ -1,6 +1,8 @@
 from algoritme_j import *
 import data
-import Visualization
+import os, os.path
+import itertools
+import numpy as np
 
 netlist = data.netlist
 
@@ -39,16 +41,17 @@ def findShortestPath(start, end):
     return path_points
 
 
+
 def calculateWireLenght(path_list):
     """
     Calculates the total length of all the paths
     input is a list of lists in the form:
     [[(start_path_1), (point_path_1), (end_path_1)], [path_2...]]
     """
-
     total_length = 0
     for path in path_list:
-        total_length += len(path)
+        if len(path)> 1:
+            total_length += len(path) - 1  # path bestaand uit N punten heet N - 1 ridges
     return total_length
 
 
@@ -120,7 +123,6 @@ def getAvrgValueAStarDistance(grid):
 def doubleStartEndPoints(netlist, chip_to_occurrences=None):
     """
     Find the number of double start/end points, that is, the sum of al occurrences higher then 1.
-
     """
     som = 0
     if chip_to_occurrences is None:
@@ -175,6 +177,7 @@ def theoreticalShortestPaths(netlist):
 
     return shortest_paths
 
+
 def areNeighbours(point1, point2):
     distance = 0
     for dimension in range(3):
@@ -182,12 +185,68 @@ def areNeighbours(point1, point2):
     distance = distance**.5
     return distance == 1
 
+
 def smoothenPath(path):
     for  i in range(len(path)):
         for j  in range(i+2, len(path)):
             if areNeighbours(path[i], path[j]):
                 return smoothenPath(path[:i+1] + path[j:])  # plus 1 to include endpoint
     return path
+
+
+
+def create_folder(container, name):
+
+    try:
+        os.listdir(container)
+    except:
+        os.makedirs(container)
+
+    # version = 0
+
+
+    try:
+        os.listdir(container + "\\" + name)
+    except:
+        os.makedirs(container + "\\" + name)
+
+    folder_name = container + "\\\\" + name
+    return folder_name
+        # while True:
+        #     try:
+        #         folder_name = container + "\\" + name + " (%i)"%(version)
+        #         os.makedirs(folder_name)
+        #         return folder_name
+        #     except:
+        #         version += 1
+
+def write_file(folder_path, file_name, stuf):
+    total_file_dir = folder_path + "\\\\" + file_name
+
+    total_file_path = total_file_dir + ".txt"
+    if os.path.exists(total_file_path):  # if succeeds the file exists
+        copy = 0
+        while True:
+            copy += 1
+            total_file_path = total_file_dir + " (%i)"%(copy)  + ".txt"
+            if not os.path.exists(total_file_path):
+                break
+
+
+    bestand  = open(total_file_path, "w+")
+    for i in stuf:
+        bestand.write(str(i))
+    bestand.close()
+
+
+def safe(netlist, shortest_paths, relay_list):
+    aantal_paden_gelegd = len([path for path in shortest_paths.values() if len(path) > 0])
+    totaal_paden = len(netlist)
+    datum = time.strftime("%d-%m-%Y")
+    folder_name = create_folder("oplossingen Joris", datum)
+    lengte_oplossing = calculateWireLenght(shortest_paths.values())
+    file_name = str(lengte_oplossing) + " " + str(aantal_paden_gelegd) + " vd " + str(totaal_paden)
+    write_file(folder_name, file_name, [relay_list] + [shortest_paths])
 
 if __name__ == "__main__":
     #example where line becomes a lot shorter by smoothening it
