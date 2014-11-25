@@ -308,7 +308,7 @@ def findPossiblePath(point1, point2, max_path_length = 60):
 
         if current_point == end:
             if sum([1 for point in path_points if point in chips]) != 2:  # only 1 point of the path is allowed to be on a chip
-                print path_pointsf
+                print path_points
                 print getPathOccupation((1,5,0))
                 assert False
             return path_points, grid
@@ -360,10 +360,13 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 15):
     # On the start and end points the intersections don't count
     setPathOccupation(point1, -1)
     setPathOccupation(point2, -1)
-
+    best_intersection_value, best_path_length = range(len(netlist)), maxdept
+    setAStarValue(point1, [0,[]])
     # print "at start itteration: ", getPathOccupation((1,5,0))
+
+    global skips
     for itteration in range(maxdept):
-        # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(current_points))
+        # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(temp_current_points))
         current_points = set(temp_current_points)
         temp_current_points = []
 
@@ -386,19 +389,36 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 15):
 
                     AStar_value[1].append(intersectiong_path)
 
-                # has to be here becouse intersections happens just above
+                # has to be here because intersections happens just above
+
+
                 intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(AStar_value)
+                if intersection_value_current_point > best_intersection_value:
+                    skips += 1
+                    continue
+                elif intersection_value_current_point == best_intersection_value and path_length_current_point > best_path_length:
+                    skips += 1
+                    continue
+                else:
+                    pass  # worthy candidate
+
+
                 intersection_value_neighbour, path_length_neighbour = getIntersectionValuePathLength(getAStarValue(neighbour))
                 if intersection_value_neighbour > intersection_value_current_point:  # so if move gives a better result
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_current_point, path_length_current_point
                 elif intersection_value_neighbour == intersection_value_current_point and path_length_neighbour > path_length_current_point:
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_neighbour, path_length_neighbour
                 # print getAStarValue(neighbour)
             # print Controle.getAvrgValueAStarDistance(a_star_grid)
             # assert False
 
+    assert itteration == maxdept - 1
     final_astar_path = [point2]
     current_point = point2
     best_neigbour = current_point
@@ -407,13 +427,18 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 15):
 
     while current_point != point1:
         intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(getAStarValue(current_point))
-
+        # best_neigbours = []
         for neighbour in findNeighbours(current_point):
             intersection_value_neighbour, neighbour_path_length =  getIntersectionValuePathLength(getAStarValue(neighbour))
 
-            if intersection_value_neighbour < intersection_value_current_point:
+            if intersection_value_neighbour > intersection_value_current_point:
+                continue  # skipp it to improve speed
+            elif intersection_value_neighbour < intersection_value_current_point:
                 best_neigbour = neighbour
             elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length < path_length_current_point:
+                best_neigbour = neighbour
+            elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length \
+                    == path_length_current_point and random.random() > .5:
                 best_neigbour = neighbour
 
         if best_neigbour == current_point:  # check to see if a best neighbour is found
@@ -424,6 +449,7 @@ def AStartAlgoritm(point1, point2, maxdept = 60, relay_badnes = 15):
 
             raise AstarError
         else:
+            # best_neigbour = random.choice(best_neigbours)
             final_astar_path.append(best_neigbour)
             current_point = best_neigbour
 
@@ -452,7 +478,7 @@ def findPaths(netlist, max_itterations = 1000, max_tries = 2):
     path_number = 0
     nets_layd = [False for net_number in range(len(netlist))]
     original_netlist = copy.deepcopy(netlist)
-    itteration = 0
+    itteration = -1
     path_tries = [0 for _ in netlist]
     while False in nets_layd:
         assert -1 not in shortest_paths
@@ -506,6 +532,8 @@ def findPaths(netlist, max_itterations = 1000, max_tries = 2):
                 conflicting_paths.remove(path_number)
             except:
                 pass
+
+            # realaying the conflicting paths
             for conflicting_path_number in conflicting_paths:
                 conflicting_path = shortest_paths[conflicting_path_number]
                 for point in conflicting_path[1:-1]:  # all points except the endpoints are free again
@@ -523,8 +551,10 @@ def findPaths(netlist, max_itterations = 1000, max_tries = 2):
             nets_layd[path_number] = True
             for conflicting_path in conflicting_paths:
                 nets_layd[conflicting_path] = False
-            print "path found but paths %s will have to be refound" %(conflicting_paths)
+            # print "path found but paths %s will have to be refound" %(conflicting_paths)
 
+
+        # extra check for intersections
         num_intersections = checkIntsections(shortest_paths.values())
         allowed_intersection_netlist = []
         for net_nummer in range(len(netlist)):
@@ -540,14 +570,13 @@ def findPaths(netlist, max_itterations = 1000, max_tries = 2):
     print "The total wire length is %i from %i paths (from a total of %i)and there are %i intersections of which there are %i on the endpoints" % (
         calculateWireLenght(shortest_paths.values()), len([path for path in shortest_paths.values() if len(path) > 0]), len(original_netlist),
         num_intersections, allowed_intersections)
-    print shortest_paths
     return shortest_paths
 
 
 if __name__ == "__main__":
     # constants
     # test = Data.e
-    # test = {0: [], 1: [(16, 7, 0), (16, 7, 1), (16, 6, 1), (16, 5, 1), (16, 4, 1), (16, 3, 1), (16, 2, 1), (16, 1, 1), (15, 1, 1), (14, 1, 1), (13, 1, 1), (12, 1, 1), (11, 1, 1), (10, 1, 1), (9, 1, 1), (8, 1, 1), (7, 1, 1), (6, 1, 1), (5, 1, 1), (4, 1, 1), (3, 1, 1), (2, 1, 1), (1, 1, 1), (1, 1, 0)], 2: [], 3: [(12, 3, 0), (12, 3, 1), (12, 4, 1), (11, 4, 1), (10, 4, 1), (10, 4, 0), (9, 4, 0), (8, 4, 0)], 4: [(14, 2, 0), (14, 1, 0), (13, 1, 0), (12, 1, 0), (11, 1, 0), (10, 1, 0)], 5: [(15, 8, 0), (15, 7, 0), (15, 6, 0), (15, 5, 0), (15, 4, 0), (15, 3, 0), (15, 2, 0), (15, 1, 0)], 6: [(1, 5, 0), (1, 4, 0), (1, 3, 0), (0, 3, 0), (0, 2, 0), (0, 1, 0), (0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0), (4, 0, 0), (5, 0, 0), (6, 0, 0), (7, 0, 0), (8, 0, 0), (9, 0, 0), (10, 0, 0), (11, 0, 0), (12, 0, 0), (13, 0, 0), (14, 0, 0), (15, 0, 0), (15, 1, 0)], 7: [], 8: [], 9: [(16, 7, 0), (16, 8, 0), (16, 8, 1), (15, 8, 1), (15, 7, 1), (15, 6, 1), (15, 5, 1), (15, 4, 1), (15, 3, 1), (15, 2, 1), (14, 2, 1), (13, 2, 1), (13, 2, 0), (12, 2, 0)], 10: [(3, 2, 0), (3, 2, 1), (3, 2, 2), (3, 3, 2), (4, 3, 2), (5, 3, 2), (6, 3, 2), (7, 3, 2), (8, 3, 2), (9, 3, 2), (10, 3, 2), (11, 3, 2), (12, 3, 2), (13, 3, 2), (13, 3, 1), (13, 3, 0), (14, 3, 0), (14, 2, 0)], 11: [(6, 1, 0), (5, 1, 0), (4, 1, 0), (4, 2, 0), (3, 2, 0)], 12: [(1, 11, 0), (2, 11, 0), (3, 11, 0), (4, 11, 0), (5, 11, 0), (6, 11, 0), (7, 11, 0), (8, 11, 0), (9, 11, 0), (10, 11, 0), (10, 10, 0), (10, 9, 0), (10, 8, 0), (10, 7, 0), (10, 6, 0), (11, 6, 0), (12, 6, 0), (12, 5, 0), (12, 4, 0), (12, 3, 0)], 13: [(1, 1, 0), (1, 2, 0), (1, 2, 1), (1, 3, 1), (1, 4, 1), (1, 5, 1), (1, 5, 0), (2, 5, 0), (3, 5, 0), (4, 5, 0)], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [], 21: [], 22: [], 23: [], 24: [], 25: [], 26: [], 27: [], 28: [], 29: [], 30: [], 31: [], 32: [], 33: [], 34: [], 35: [], 36: [], 37: [], 38: [], 39: [], 40: [], 41: [], 42: [], 43: [], 44: [], 45: [], 46: [], 47: [], 48: [], 49: []}.values()
+
     # chips = Data.chips
     # print set([(net[0], net[-1]) for net in test if len(net) > 1])
     # for net in test:
@@ -560,13 +589,15 @@ if __name__ == "__main__":
     # import time
     # time.sleep(.2)
     # assert False
-    while True: # for i in range(10):
+
+     for i in range(10):
+        skips = 0
         X_SIZE = Data.X_SIZE
         Y_SIZE = Data.Y_SIZE
         Z_SIZE = Data.Z_SIZE
         chips = Data.chips
         netlist = Data.netlist
-        netlsit = Grid.sortDistance(netlist)
+        netlist = Grid.sortDistance(netlist)
 
         path_grid = Grid.createPathGrid()
         grid = Grid.createGrid()
@@ -574,16 +605,16 @@ if __name__ == "__main__":
 
         print 'finding paths'
         print netlist
-        shortest_paths = findPaths(netlist, 2000, 2)
+        shortest_paths = findPaths(netlist, 2000, 3)
         print shortest_paths
+        print skips
 
-        # safe output
-        datum = time.strftime("%d-%m-%Y")
-        folder_name = Controle.create_folder("oplossingen Joris", datum)
-        lengte_oplossing = calculateWireLenght(shortest_paths.values())
+
         aantal_paden_gelegd = len([path for path in shortest_paths.values() if len(path) > 0])
         totaal_paden = len(netlist)
-        file_name = str(lengte_oplossing) + " " + str(aantal_paden_gelegd) + " vd " + str(totaal_paden)
-        Controle.write_file(folder_name, file_name, [relay_list] + [shortest_paths.values()])
+        # safe output
+        if True: #aantal_paden_gelegd == totaal_paden:
+            Controle.safe(netlist, shortest_paths, relay_list)
+
         layer = 0
         # Visualization.runVisualization(shortest_paths.values(), layer)
