@@ -360,7 +360,7 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
         # intersection_value_point = len(value_point[1])
         intersection_value_point = 0
         for intersectiong_path in set(value_point[1]):
-            intersection_value_point += 1 # + relay_list[intersectiong_path] / relay_badnes
+            intersection_value_point += 1 + relay_list[intersectiong_path] / relay_badnes
 
         return intersection_value_point, point_path_length
 
@@ -373,11 +373,13 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
     temp_current_points = [point1]
     setAStarValue(point1, [0, []])
     setOccupation(point2, True)
-    setOccupation(point1, True)
 
     # On the start and end points the intersections don't count
     setPathOccupation(point1, -1)
     setPathOccupation(point2, -1)
+
+    best_intersection_value, best_path_length = range(len(netlist)), maxdept
+    setAStarValue(point1, [0, []])
 
     # print "at start itteration: ", getPathOccupation((1,5,0))
     for itteration in range(maxdept):
@@ -398,7 +400,6 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
                 AStar_value = copy.deepcopy(value)
 
                 if not isFree(neighbour):
-
                     intersectiong_path = getPathOccupation(neighbour)
                     if intersectiong_path == -2:  # if the point is occupied by a chip we can skip it
                         continue
@@ -407,16 +408,24 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
 
                 # has to be here because intersections happens just above
                 intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(AStar_value)
+                if intersection_value_current_point > best_intersection_value:
+                    continue
+                elif intersection_value_current_point == best_intersection_value and path_length_current_point > best_path_length:
+                    continue
+                else:
+                    pass  # worthy candidate
+
                 intersection_value_neighbour, path_length_neighbour = getIntersectionValuePathLength(getAStarValue(neighbour))
                 if intersection_value_neighbour > intersection_value_current_point:  # so if move gives a better result
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_current_point, path_length_current_point
                 elif intersection_value_neighbour == intersection_value_current_point and path_length_neighbour > path_length_current_point:
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
-                # print getAStarValue(neighbour)
-            # print Controle.getAvrgValueAStarDistance(a_star_grid)
-            # assert False
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_neighbour, path_length_neighbour
 
     final_astar_path = [point2]
     current_point = point2
@@ -448,9 +457,18 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
     conflicting_paths = []
     for point in final_astar_path:
         conflicting_paths.append(getPathOccupation(point))
+        if getPathOccupation(point) == -2:
+            if point in chips:
+                print "Point = chip "
+            print point, ' ON CHIP '
     conflicting_paths = set(conflicting_paths)
     if -1 in conflicting_paths:
         conflicting_paths.remove(-1)
+
+    # setPathOccupation(point1, -2)
+    # setPathOccupation(point2, -2)
+    # setOccupation(point2, False)
+    # setOccupation(point1, False)
 
     try:
         for path_number in conflicting_paths:
@@ -458,8 +476,11 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
     except:
         print 00000000000000000000000000000000, path_number
 
-    if sum([1 for point in final_astar_path if point in chips]) == 0:  # only 2 points of the path are allowed to be on a chip
+    if sum([1 for point in final_astar_path if point in chips]) != 2:  # only 2 points of the path are allowed to be on a chip
         print "path = ", final_astar_path
+        for point in final_astar_path:
+            if point in chips:
+                print point
         assert False
     return final_astar_path, conflicting_paths
 
