@@ -1,14 +1,16 @@
 # Chips & Circuits case - The Chipmunks: Joris Schefold, Rick Hutten, Marcella Wijngaarden
 import data as data
 import pygame
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 netlist = data.netlist  # The paths that need to be drawn
 chips = data.chips    # The chips on the grid
 
 layer = 0  # The layer that is drawn first
 
-X_SIZE = data.X_SIZE  #
-Y_SIZE = data.Y_SIZE  # Dimensions of the grid
+X_SIZE = data.X_SIZE-1  #
+Y_SIZE = data.Y_SIZE-1  # Dimensions of the grid
 Z_SIZE = data.Z_SIZE  #
 
 SCALE = 30
@@ -218,5 +220,35 @@ def runVisualization(paths, active_layer = 0):
                     pygame.display.update()
     pygame.quit()
 
-if __name__ == "__main__":
-    runVisualization([])
+
+def run3DVisualisation(paths, file_name):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for chip in data.chips:
+        chip_x = chip[0]
+        chip_y = chip[1]
+        ax.scatter(chip_x, chip_y, s=30, c='r')
+
+    for path in paths:
+        x = []
+        y = []
+        z = []
+        for point in path:
+            x.append(point[0])
+            y.append(point[1])
+            z.append(point[2])
+        ax.plot(x, y, z, markersize=20)
+
+    ax.set_xlim(0, X_SIZE)
+    ax.set_xticks(range(X_SIZE + 1))
+    ax.set_xticklabels(range(X_SIZE + 1), alpha=0.0)
+    ax.set_ylim(0, Y_SIZE)
+    ax.set_yticks(range(Y_SIZE + 1))
+    ax.set_yticklabels(range(X_SIZE + 1), alpha=0.0)
+    ax.set_zlim(0, Z_SIZE - 1)
+    ax.set_frame_on(False)
+    ax.set_zlabel("Layer")
+    plt.show()
+    #plt.savefig(str(file_name) + ".png", format="png")
+    plt.close()
