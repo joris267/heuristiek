@@ -11,11 +11,13 @@ import copy
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
+
 chips = data.chips
 netlist = data.sortDistance(data.netlist)
 path_grid = grid.createPathGrid()
 grid = grid.createGrid()
 relay_list = [0 for i in netlist]
+skips = 0
 
 def setPathOccupation(point, path_number):
     """
@@ -154,13 +156,14 @@ def simulatedAnnealing(intersecting_paths, paths_dict, max_iteration=1000):
     #         tempo.setOccupation(point)
     #         tempo.setPathOccupation(point, -1)
     #     paths_dict_new[cross_path] = []
-
+    # print paths_dict_new
+    # print netlist, netlist[0], netlist[49]
     while len(intersecting_paths) != 0:
         counter += 1
         #index = random.randrange(1, len(intersecting_paths))
         current_path_number = random.sample(intersecting_paths, 1)[0]
         #print current_path_number
-        net = netlist[current_path_number-1]
+        net = netlist[current_path_number]
 
         current_path = paths_dict_new[current_path_number]
         current_path_length = len(current_path)
@@ -175,7 +178,8 @@ def simulatedAnnealing(intersecting_paths, paths_dict, max_iteration=1000):
             tempo.setPathOccupation(point, -1)
             tempo.setOccupation(point, True)
 
-        new_path, new_intersections_set = tempo.AStartAlgoritm(start, end)[0], tempo.AStartAlgoritm(start, end)[1]
+        new_path, new_intersections_set = tempo.AStartAlgoritm(start, end, grid, path_grid)[0], \
+                                          tempo.AStartAlgoritm(start, end, grid, path_grid)[1]
         #print new_path
 
         tempo.setPathOccupation(start, -2)
