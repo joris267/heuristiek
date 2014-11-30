@@ -8,7 +8,7 @@ import operator
 import copy
 import breadth_first_algoritme
 
-path_grid = breadth_first_algoritme.path_grid #grid.createPathGrid()
+path_grid = breadth_first_algoritme.path_grid
 grid = breadth_first_algoritme.grid
 relay_list = breadth_first_algoritme.relay_list
 
@@ -336,8 +336,11 @@ def findMinimalIntersectingPath(start, end):
             value += delta
         return value
 
-def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
-
+def AStartAlgoritm(point1, point2, grid2, path_grid2, maxdept = 60, relay_badnes = 15,):
+    global grid
+    global path_grid
+    grid = grid2
+    path_grid = path_grid2
 
     def setAStarValue(point, value):
         # try:
@@ -358,9 +361,9 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
 
         point_path_length = value_point[0]
         # intersection_value_point = len(value_point[1])
-        intersection_value_point = 0
+        intersection_value_point =  0
         for intersectiong_path in set(value_point[1]):
-            intersection_value_point += 1 # + relay_list[intersectiong_path] / relay_badnes
+            intersection_value_point += 1 + relay_list[intersectiong_path] / relay_badnes
 
         return intersection_value_point, point_path_length
 
@@ -368,20 +371,24 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
     a_star_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=list)
 
     #grid is filled with list [number, set with conflicts]
-    a_star_grid.fill([maxdept, range(len(netlist))])  # try to improve so have to start with global worse case senario
+    a_star_grid.fill([maxdept,range(len(netlist))])  # try to improve so have to start with global worse case senario
 
     temp_current_points = [point1]
-    setAStarValue(point1, [0, []])
+    setAStarValue(point1, [0,[]])
     setOccupation(point2, True)
     setOccupation(point1, True)
 
     # On the start and end points the intersections don't count
     setPathOccupation(point1, -1)
     setPathOccupation(point2, -1)
-
+    best_intersection_value, best_path_length = range(len(netlist)), maxdept
+    setAStarValue(point1, [0,[]])
     # print "at start itteration: ", getPathOccupation((1,5,0))
+
+    global skips
+    skips = breadth_first_algoritme.skips
     for itteration in range(maxdept):
-        # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(current_points))
+        # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(temp_current_points))
         current_points = set(temp_current_points)
         temp_current_points = []
 
@@ -398,7 +405,6 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
                 AStar_value = copy.deepcopy(value)
 
                 if not isFree(neighbour):
-
                     intersectiong_path = getPathOccupation(neighbour)
                     if intersectiong_path == -2:  # if the point is occupied by a chip we can skip it
                         continue
@@ -406,32 +412,55 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
                     AStar_value[1].append(intersectiong_path)
 
                 # has to be here because intersections happens just above
+
+
                 intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(AStar_value)
+                if intersection_value_current_point > best_intersection_value:
+                    skips += 1
+                    continue
+                elif intersection_value_current_point == best_intersection_value and path_length_current_point > best_path_length:
+                    skips += 1
+                    continue
+                else:
+                    pass  # worthy candidate
+
+
                 intersection_value_neighbour, path_length_neighbour = getIntersectionValuePathLength(getAStarValue(neighbour))
                 if intersection_value_neighbour > intersection_value_current_point:  # so if move gives a better result
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_current_point, path_length_current_point
                 elif intersection_value_neighbour == intersection_value_current_point and path_length_neighbour > path_length_current_point:
                     setAStarValue(neighbour, AStar_value)
                     temp_current_points.append(neighbour)
+                    if neighbour == point2:
+                        best_intersection_value, best_path_length = intersection_value_neighbour, path_length_neighbour
                 # print getAStarValue(neighbour)
             # print Controle.getAvrgValueAStarDistance(a_star_grid)
             # assert False
 
+    assert itteration == maxdept - 1
     final_astar_path = [point2]
     current_point = point2
     best_neigbour = current_point
+
     # print "when going back", getPathOccupation((1,5,0))
 
     while current_point != point1:
         intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(getAStarValue(current_point))
-
+        # best_neigbours = []
         for neighbour in findNeighbours(current_point):
-            intersection_value_neighbour, neighbour_path_length = getIntersectionValuePathLength(getAStarValue(neighbour))
+            intersection_value_neighbour, neighbour_path_length =  getIntersectionValuePathLength(getAStarValue(neighbour))
 
-            if intersection_value_neighbour < intersection_value_current_point:
+            if intersection_value_neighbour > intersection_value_current_point:
+                continue  # skipp it to improve speed
+            elif intersection_value_neighbour < intersection_value_current_point:
                 best_neigbour = neighbour
             elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length < path_length_current_point:
+                best_neigbour = neighbour
+            elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length \
+                    == path_length_current_point and random.random() > .5:
                 best_neigbour = neighbour
 
         if best_neigbour == current_point:  # check to see if a best neighbour is found
@@ -442,6 +471,7 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
 
             raise AstarError
         else:
+            # best_neigbour = random.choice(best_neigbours)
             final_astar_path.append(best_neigbour)
             current_point = best_neigbour
 
@@ -452,16 +482,162 @@ def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
     if -1 in conflicting_paths:
         conflicting_paths.remove(-1)
 
-    try:
-        for path_number in conflicting_paths:
-            relay_list[path_number] += 1
-    except:
-        print 00000000000000000000000000000000, path_number
+    for path_number in conflicting_paths:
+        relay_list[path_number] += 1
 
-    if sum([1 for point in final_astar_path if point in chips]) == 0:  # only 2 points of the path are allowed to be on a chip
-        print "path = ", final_astar_path
+    if sum([1 for point in final_astar_path if point in chips]) != 2:  # only 1 point of the path is allowed to be on a chip
+        print final_astar_path
         assert False
     return final_astar_path, conflicting_paths
+
+#
+# def AStartAlgoritm(point1, point2, maxdept=60, relay_badnes=15):
+#
+#
+#     def setAStarValue(point, value):
+#         # try:
+#         if inGrid(point):
+#             a_star_grid[point[0]][point[1]][point[2]] = value
+#         # except:
+#         #     print point[0]
+#
+#
+#     def getAStarValue(point):
+#         if inGrid(point):
+#             return a_star_grid[point[0]][point[1]][point[2]]
+#         else:
+#             raise AstarError
+#
+#
+#     def getIntersectionValuePathLength(value_point):
+#
+#         point_path_length = value_point[0]
+#         # intersection_value_point = len(value_point[1])
+#         intersection_value_point = 0
+#         for intersectiong_path in set(value_point[1]):
+#             intersection_value_point += 1 + relay_list[intersectiong_path] / relay_badnes
+#
+#         return intersection_value_point, point_path_length
+#
+#
+#     a_star_grid = np.ndarray(shape=(X_SIZE, Y_SIZE, Z_SIZE), dtype=list)
+#
+#     #grid is filled with list [number, set with conflicts]
+#     a_star_grid.fill([maxdept, range(len(netlist))])  # try to improve so have to start with global worse case senario
+#
+#     temp_current_points = [point1]
+#     setAStarValue(point1, [0, []])
+#     setOccupation(point2, True)
+#
+#     # On the start and end points the intersections don't count
+#     setPathOccupation(point1, -1)
+#     setPathOccupation(point2, -1)
+#
+#     best_intersection_value, best_path_length = range(len(netlist)), maxdept
+#     setAStarValue(point1, [0, []])
+#
+#     # print "at start itteration: ", getPathOccupation((1,5,0))
+#     for itteration in range(maxdept):
+#         # print "going down deeper, itteration %i, we have %i points to move" %(itteration, len(current_points))
+#         current_points = set(temp_current_points)
+#         temp_current_points = []
+#
+#         for point in current_points:
+#             neighbours = findNeighbours(point)
+#             try:
+#                 value = getAStarValue(point)
+#             except:
+#                 print point
+#                 assert False
+#
+#             value[0] += 1  # taking a step
+#             for neighbour in neighbours:
+#                 AStar_value = copy.deepcopy(value)
+#
+#                 if not isFree(neighbour):
+#                     intersectiong_path = getPathOccupation(neighbour)
+#                     if intersectiong_path == -2:  # if the point is occupied by a chip we can skip it
+#                         continue
+#
+#                     AStar_value[1].append(intersectiong_path)
+#
+#                 # has to be here because intersections happens just above
+#                 intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(AStar_value)
+#                 if intersection_value_current_point > best_intersection_value:
+#                     continue
+#                 elif intersection_value_current_point == best_intersection_value and path_length_current_point > best_path_length:
+#                     continue
+#                 else:
+#                     pass  # worthy candidate
+#
+#                 intersection_value_neighbour, path_length_neighbour = getIntersectionValuePathLength(getAStarValue(neighbour))
+#                 if intersection_value_neighbour > intersection_value_current_point:  # so if move gives a better result
+#                     setAStarValue(neighbour, AStar_value)
+#                     temp_current_points.append(neighbour)
+#                     if neighbour == point2:
+#                         best_intersection_value, best_path_length = intersection_value_current_point, path_length_current_point
+#                 elif intersection_value_neighbour == intersection_value_current_point and path_length_neighbour > path_length_current_point:
+#                     setAStarValue(neighbour, AStar_value)
+#                     temp_current_points.append(neighbour)
+#                     if neighbour == point2:
+#                         best_intersection_value, best_path_length = intersection_value_neighbour, path_length_neighbour
+#
+#     final_astar_path = [point2]
+#     current_point = point2
+#     best_neigbour = current_point
+#     # print "when going back", getPathOccupation((1,5,0))
+#
+#     while current_point != point1:
+#         intersection_value_current_point, path_length_current_point = getIntersectionValuePathLength(getAStarValue(current_point))
+#
+#         for neighbour in findNeighbours(current_point):
+#             intersection_value_neighbour, neighbour_path_length = getIntersectionValuePathLength(getAStarValue(neighbour))
+#
+#             if intersection_value_neighbour < intersection_value_current_point:
+#                 best_neigbour = neighbour
+#             elif intersection_value_neighbour == intersection_value_current_point and neighbour_path_length < path_length_current_point:
+#                 best_neigbour = neighbour
+#
+#         if best_neigbour == current_point:  # check to see if a best neighbour is found
+#             print current_point
+#             print len(getAStarValue(current_point)[1]), getAStarValue(current_point)[0]
+#             print point1, point2
+#             print [(len(getAStarValue(i)[1]), getAStarValue(i)[0]) for i in findNeighbours(current_point)]
+#
+#             raise AstarError
+#         else:
+#             final_astar_path.append(best_neigbour)
+#             current_point = best_neigbour
+#
+#     conflicting_paths = []
+#     for point in final_astar_path:
+#         conflicting_paths.append(getPathOccupation(point))
+#         if getPathOccupation(point) == -2:
+#             if point in chips:
+#                 print "Point = chip "
+#             print point, ' ON CHIP '
+#     conflicting_paths = set(conflicting_paths)
+#     if -1 in conflicting_paths:
+#         conflicting_paths.remove(-1)
+#
+#     # setPathOccupation(point1, -2)
+#     # setPathOccupation(point2, -2)
+#     # setOccupation(point2, False)
+#     # setOccupation(point1, False)
+#
+#     try:
+#         for path_number in conflicting_paths:
+#             relay_list[path_number] += 1
+#     except:
+#         print 00000000000000000000000000000000, path_number
+#
+#     if sum([1 for point in final_astar_path if point in chips]) != 2:  # only 2 points of the path are allowed to be on a chip
+#         print "path = ", final_astar_path
+#         for point in final_astar_path:
+#             if point in chips:
+#                 print point
+#         assert False
+#     return final_astar_path, conflicting_paths
 
 #
 # def AStartAlgoritm(point1, point2, maxdept=60):
@@ -705,6 +881,30 @@ def findPath(start, end, grid2):
                 #print 'path found before:', len(path_points), path_points
                 #print 'path found after :', len(path_points_smoothed), path_points_smoothed
             return path_points_smoothed, grid
+
+def checkIntsections(path_list):
+    """
+    Checks if there are intersections in the path.
+    Returns the number of intersections in the path
+    """
+    chips = [str(chip) for chip in Data.chips]
+    occurences_dict = {}
+    joined_list = list(itertools.chain.from_iterable(path_list))
+    for point in joined_list:
+        if str(point) in occurences_dict:
+            occurences_dict[str(point)] += 1
+        else:
+            occurences_dict[str(point)] = 1
+
+    for point in occurences_dict:
+        if occurences_dict[str(point)] > 1:
+            if point not in chips:
+                print "point", point, "is occupied by multiple lines"
+                raise IntersectionError
+
+    intersection_list = [i for i in occurences_dict.values() if i > 1]
+    total_intersectios = sum(intersection_list)
+    return total_intersectios
 
 def startAlgorithms():
     global grid
