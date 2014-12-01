@@ -8,48 +8,76 @@ Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
 
 FILL_VALUE = -1
+CHIP_VALUE = -2
 
 
-def createGrid():
+def _createGrid():
     """
     Creates an grid filled with FILL_VALUE
+    Only used inner class. For reference to the grid object use grid.grid
     """
-    return numpy.full(shape=(X_SIZE, Y_SIZE, Z_SIZE), fill_value=FILL_VALUE, dtype=type(FILL_VALUE))
+    g = numpy.full(shape=(X_SIZE, Y_SIZE, Z_SIZE), fill_value=FILL_VALUE, dtype=type(FILL_VALUE))
+    for c in data.chips:
+        g[c[0]][c[1]][c[2]] = CHIP_VALUE
+    return g
 
 
-def isOccupied(input):
+def isOccupied(point):
     """
     Returns True if the given point or path is occupied
     """
-    if type(input[0]) == int:  # Input is a point
-        point = input
-        if grid[point[0]][point[1]][point[2]] == FILL_VALUE:
-            return False
-        return True
-    if type(input[0]) == tuple or type(input[0] == list):  # Input is a tuple or a list
-        path = input
-        for point in path:
-            if grid[point[0]][point[1]][point[2]] == FILL_VALUE:
-                continue
-            else:
-                return True
+    point_value = grid[point[0]][point[1]][point[2]]
+    if point_value == FILL_VALUE or point_value == CHIP_VALUE:
         return False
+    return True
+
+
+def notInGrid(point):
+    """
+    Returns true if point is not in grid
+    """
+    x, y, z = point[0], point[1], point[2]
+    if x < 0 or y < 0 or z < 0 or x >= X_SIZE or y >= Y_SIZE or z >= Z_SIZE:
+        return True
+    return False
+
+
+def getOccupation(path):
+    """
+    Returns a list of indexes of lines the path intersects
+    """
+    intersections = []
+    for point in path[1:-1]:
+        point_value = grid[point[0]][point[1]][point[2]]
+        if point_value != FILL_VALUE and point_value not in intersections:
+            intersections.append(point_value)
+    return intersections
+
+
+def getPointOccupation(point):
+    """
+    Returns the value of the point in the grid
+    """
+    return grid[point[0]][point[1]][point[2]]
 
 
 def setOccupation(path, grid_value):
     """
     Sets points in the grid as occupied. The number in the grid corresponds to the drawn line number.
     """
-    for index, point in enumerate(path):
-        if index != 0 and index != len(path) - 1:
-            grid[point[0]][point[1]][point[2]] = grid_value
+    for point in path[1:-1]:
+        grid[point[0]][point[1]][point[2]] = grid_value
+
+
+def setPointOccupation(point, grid_value):
+    grid[point[0]][point[1]][point[2]] = grid_value
 
 
 def clearOccupation(path):
     """
     Clears the path from the grid. It sets the 'empty value' to all points of the given path
     """
-    for point in path:
+    for point in path[1:-1]:
         grid[point[0]][point[1]][point[2]] = FILL_VALUE
 
-grid = createGrid()
+grid = _createGrid()  # Create the variable grid for usage from other files. Reference to this variable.
