@@ -19,7 +19,7 @@ DOWN = 5
 directions = [WEST, NORTH, EAST, SOUTH, UP, DOWN]
 
 chips = data.chips
-netlist = data.netlist
+netlist = data.netlist_2
 print "Netlist size:", len(netlist)
 
 data_grid = grid.grid
@@ -52,6 +52,83 @@ def areNeighbours(point1, point2):
         distance += (point1[dimension] - point2[dimension])**2
     distance **= .5
     return distance == 1
+
+
+def superSmoothPath(path):
+
+    old_path = path
+    i = 0
+    while i < len(path):
+        point = path[i]
+        j = 1
+        while j < len(path):
+            other_point = path[j]
+            connection_path = path[i:(j+1)]
+            connections = checkConnections(point, other_point, connection_path)
+            if connections is not None:
+                # print 'finding path between :', path[0], path[-1]
+                # print 'point : ', point, 'other_point : ', other_point
+                pre_path = path[:i]
+                post_path = path[(j+1):]
+                path = [pre_path + connections + post_path][0]
+                j = 0
+                # print "connection path old: ", connection_path
+                # print 'pre_path = ', pre_path, 'connections = ', connections, 'post_path = ', post_path, 'path = ', path
+                # # break
+            j += 1
+        i += 1
+
+    return path
+
+
+def checkConnections(first_point, second_point, path):
+
+    current_length = len(path)
+    #check if the points are on one line
+    delta_x = abs(max(first_point[0], second_point[0]) - min(first_point[0], second_point[0]))
+    delta_y = abs(max(first_point[1], second_point[1]) - min(first_point[1], second_point[1]))
+    delta_z = abs(max(first_point[2], second_point[2]) - min(first_point[2], second_point[2]))
+
+    # delta_x = abs(first_point[0] - second_point[0])
+    # delta_y = abs(first_point[1] - second_point[1])
+    # delta_z = abs(first_point[2] - second_point[2])
+
+    combo = [delta_x, delta_y, delta_z]
+    not_zero = []
+    i = 0
+    for delta in combo:
+        if delta != 0:
+            not_zero.append([delta, i])
+        i += 1
+
+
+    track = []
+    if len(not_zero) == 1:
+        # print 'look between : ', first_point, second_point
+        # print 'current path : ', path
+        delta = not_zero[0][0]
+        dimension = not_zero[0][1]  # move in x, y or z direction
+        direction = -(first_point[dimension] - second_point[dimension])/delta
+
+        if direction != 0:
+            for j in range(0, direction*(delta+2), direction):
+                check_point_list = [first_point[0], first_point[1], first_point[2]]
+                check_point_list[dimension] = check_point_list[dimension] + j
+                check_point = (check_point_list[0], check_point_list[1], check_point_list[2])
+                if not grid.isOccupied(check_point) or check_point in path:
+                    track.append(check_point)
+                    # print 'track = ', track
+                    if check_point == second_point and len(track) < current_length:
+                        if track != path:
+                            # print 'track returned'
+                            return track
+                        else:
+                            break
+                    else:
+                        continue
+                else:
+                    return None
+    return None
 
 
 def smoothPath(path):
@@ -160,7 +237,7 @@ def aStarPathFinder(point1, point2):
             path.append(next_point)
             continue  # Continue, find next point
 
-    return smoothPath(path)
+    return superSmoothPath(path)
 
 
 def main():
@@ -211,7 +288,8 @@ def runMain():
     path_list = main()
     time_end = time.clock()
     path_length = 0
-    for path in path_list:
+    for index, path in enumerate(path_list):
+        path_list[index] = superSmoothPath(path)
         path_length += len(path) - 1
     print "Path length:", path_length
     print "Calculated in:", int(time_end - time_start), "seconds"
@@ -221,15 +299,18 @@ def runMain():
 
 def runTest():
     start = time.clock()
-    path = aStarPathFinder((1, 1, 0), (15, 8, 0))
+    #path = aStarPathFinder((1, 1, 0), (15, 8, 0))
+    path = [(1, 1, 0), (1, 2, 0), (1, 3, 0), (1, 3, 1), (1, 4, 1), (1, 5, 1), (2, 5, 1), (3, 5, 1), (3, 5, 0), (3, 6, 0), (4, 6, 0), (5, 6, 0), (5, 7, 0), (5, 8, 0), (5, 8, 1), (4, 8, 1), (4, 7, 1), (4, 7, 2), (5, 7, 2), (6, 7, 2), (7, 7, 2), (7, 7, 1), (7, 8, 1), (8, 8, 1), (8, 9, 1), (8, 9, 0), (9, 9, 0), (10, 9, 0), (10, 8, 0), (10, 7, 0), (10, 6, 0), (11, 6, 0), (12, 6, 0), (12, 7, 0), (12, 8, 0), (13, 8, 0), (14, 8, 0), (15, 8, 0)]
     end = time.clock()
     print "Path calculate time", end - start
     print "Path length: ", len(path)
-    print path
 
     Visualization.run3DVisualisation([path], 0)
-    smooth_path = superSmoother(path)
-    Visualization.run3DVisualisation([smooth_path], 0)
+    start = time.clock()
+    smoother_path = smoothPath(path)
+    end = time.clock()
+    print "Smooth in:", end - start
+    Visualization.run3DVisualisation([smoother_path], 0)
 
     ####
     #### Path that needs smoohting:
@@ -238,5 +319,5 @@ def runTest():
 
 
 if __name__ == "__main__":
-    #runMain()
-    runTest()
+    runMain()
+    #runTest()
