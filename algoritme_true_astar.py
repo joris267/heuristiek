@@ -6,7 +6,22 @@ import Visualization
 
 chips = data.chips
 netlist = data.netlist
+print "Netlist size:", len(netlist)
+
 data_grid = grid.grid
+
+nets_unsorted = []  # List with start and end points of lines
+final_paths = {}
+total_no_of_paths = len(netlist)
+not_layed_paths = set(range(len(netlist)))
+
+index_path_dict = {}
+
+for k, path in enumerate(netlist):  # Making routes_unsorted
+    chip_start = path[0]
+    chip_end = path[1]
+    nets_unsorted.append((chips[chip_start], chips[chip_end]))
+    final_paths[k] = []
 
 
 def findNeighbours(point):
@@ -37,15 +52,17 @@ def aStar(point1, point2, line_val):
     g = 0
     h = minPathLength((point1, point2))
     f = g + h
+    visited_points = []
     heappush(queue, (f, g, h, point1, [point1]))
 
     while queue != []:
         q = heappop(queue)
 
         for no, successor in enumerate(findNeighbours(q[3])):
+            if successor in visited_points:
+                continue
+            visited_points.append(successor)
             if successor == point2:
-                print "Pad gevonden!"
-                print q[4] + [successor]
                 return q[4] + [successor]
             g = q[1] + 1
             h = minPathLength((successor, point2))
@@ -56,15 +73,27 @@ def aStar(point1, point2, line_val):
             item = (f, g, h, successor, q[4] + [successor])
             heappush(queue, item)
 
-        grid.setPointOccupation(q[3], line_val)
+        #rid.setPointOccupation(q[3], line_val)
     print "Path not found"
     return []
 
 
+def main():
+    netlist_sorted = sorted(nets_unsorted, key=minPathLength)  # Sort nets_unsorted by minimum length
+
+    for index, net in enumerate(netlist_sorted):
+        print index
+
+        path = aStar(net[0], net[1], index)
+        grid.setOccupation(path, index)
+        if path != []:
+            final_paths[index] = path
+
+    return final_paths.values()
+
 if __name__ == "__main__":
     start = time.clock()
-    path = aStar((1, 1, 0), (15, 8, 0), 1)
-    path2 = aStar((6, 1, 0), (9, 10, 0), 2)
-    print time.clock() - start
+    paths = main()
+    print "Calculated in:", time.clock() - start
 
-    Visualization.run3DVisualisation([path, path2], 3)
+    Visualization.run3DVisualisation(paths)
