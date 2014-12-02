@@ -26,8 +26,21 @@ def isOccupied(point):
     """
     Returns True if the given point or path is occupied
     """
-    point_value = grid[point[0]][point[1]][point[2]]
-    if point_value == FILL_VALUE or point_value == CHIP_VALUE:
+    try:
+        point_value = grid[point[0]][point[1]][point[2]]
+        if point_value == FILL_VALUE:
+            return False
+        return True
+    except IndexError:
+        return True
+
+
+def inGrid(point):
+    """
+    Returns true if point is not in grid
+    """
+    x, y, z = point[0], point[1], point[2]
+    if x < 0 or y < 0 or z < 0 or x >= X_SIZE or y >= Y_SIZE or z >= Z_SIZE:
         return False
     return True
 
