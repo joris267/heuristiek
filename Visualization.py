@@ -221,7 +221,7 @@ def runVisualization(paths, active_layer = 0):
     pygame.quit()
 
 
-def run3DVisualisation(paths, file_name):
+def run3DVisualisation(paths, file_name="untitled"):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 

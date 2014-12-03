@@ -32,6 +32,8 @@ def isOccupied(point):
             return False
         return True
     except IndexError:
+        print "Error occurred in isOccupied"
+        print "Point =", point
         return True
 
 
