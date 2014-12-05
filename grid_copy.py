@@ -11,7 +11,7 @@ FILL_VALUE = -1
 CHIP_VALUE = -2
 
 
-def _createGrid():
+def createGrid():
     """
     Creates an grid filled with FILL_VALUE
     Only used inner class. For reference to the grid object use grid.grid
@@ -47,6 +47,11 @@ def inGrid(point):
     return True
 
 
+def clearGrid():
+    global grid
+    grid = createGrid()
+
+
 def notInGrid(point):
     """
     Returns true if point is not in grid
@@ -66,6 +71,12 @@ def getOccupation(path):
         point_value = grid[point[0]][point[1]][point[2]]
         if point_value != FILL_VALUE and point_value not in intersections:
             intersections.append(point_value)
+    intersections = set(intersections)
+    try:
+        intersections.remove(-2)
+    except KeyError:
+        pass
+    intersections = list(intersections)
     return intersections
 
 
@@ -95,4 +106,4 @@ def clearOccupation(path):
     for point in path[1:-1]:
         grid[point[0]][point[1]][point[2]] = FILL_VALUE
 
-grid = _createGrid()  # Create the variable grid for usage from other files. Reference to this variable.
+grid = createGrid()  # Create the variable grid for usage from other files. Reference to this variable.

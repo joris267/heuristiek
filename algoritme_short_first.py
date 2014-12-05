@@ -19,7 +19,7 @@ DOWN = 5
 directions = [WEST, NORTH, EAST, SOUTH, UP, DOWN]
 
 chips = data.chips
-netlist = data.netlist_2
+netlist = data.netlist
 print "Netlist size:", len(netlist)
 
 data_grid = grid.grid
@@ -139,34 +139,6 @@ def smoothPath(path):
     return path
 
 
-def areDistantNeighbours(point1, point2):
-    distance = 0
-    for dimension in range(3):  # For x, y and z
-        distance += (point1[dimension] - point2[dimension])**2
-    distance **= .5
-    return distance == 2
-
-
-def pointBetween(point1, point2):
-    if point1[0] != point2[0]:
-        return int(point1[0] + point2[0] / 2), point1[1], point1[2]
-    if point1[1] != point2[1]:
-        return point1[0], int(point1[1] + point2[1] / 2), point1[2]
-    if point1[2] != point2[2]:
-        return point1[0], point1[1], int(point1[2] + point2[2] / 2)
-
-
-def superSmoother(path):
-    for i in range(len(path)):
-        for j in range(i+2, len(path)):
-            if areDistantNeighbours(path[i], path[j]):
-                point_between = pointBetween(path[i], path[j])
-                if not grid.isOccupied(point_between) and point_between != path[i+1]:
-                    print "Jaaaaaaaa", path[i], point_between, path[j]
-                    return superSmoother(path[:i+1] + [point_between] + path[j:])  # plus 1 to include endpoint
-    return path
-
-
 def getNextPoint(point, direction):
     """
     Returns the next point given the direction
@@ -260,13 +232,13 @@ def main():
         net = netlist_sorted[path_id]
         #print "Finding path for id:", path_id, "net:", net
         path = aStarPathFinder(net[0], net[1])
-        if path != [] or len(path) > minPathLength(net) + 20:
+        if path != []:
             #print "Fail combo:", fail_combo
             fail_combo_list.append(fail_combo)
             fail_combo = 0
             not_layed_paths.remove(path_id)
             conflicts = grid.getOccupation(path)
-            #print "No of conflics of current path:", len(conflicts)
+            #print "No of conflicts of current path:", len(conflicts)
             for conflict in conflicts:
                 grid.clearOccupation(final_paths[conflict])     #
                 final_paths[conflict] = []                      # The conflicting path is erased
