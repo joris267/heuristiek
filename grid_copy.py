@@ -50,6 +50,26 @@ def inGrid(point):
 def clearGrid():
     global grid
     grid = createGrid()
+    return grid
+
+
+def rebuildGrid(path_dict):
+    """
+    Rebuilds grid with the given path_dict
+    path_dict = {1: [path], 2:[path], ...}
+    """
+    global grid
+    grid = clearGrid()
+    for path_val in path_dict.keys():
+        for point in path_dict[path_val]:
+            grid[point[0]][point[1]][point[2]] = path_val
+
+def minPathLength(points):
+    """
+    Calculates the minimum path length of the route 'points'
+    points = list containing one start and end point
+    """
+    return abs(points[0][0] - points[1][0]) + abs(points[0][1] - points[1][1]) + abs(points[0][2] - points[1][2])
 
 
 def notInGrid(point):

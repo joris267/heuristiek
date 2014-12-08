@@ -7,7 +7,7 @@ import grid_copy as grid
 from heapq import *
 import Visualization
 
-seed = 34  # 34 is best so far
+seed = 2  # 34 is best so far
 random.seed(str(seed))
 chips = data.chips
 netlist = data.netlist
@@ -15,6 +15,7 @@ print "Netlist size:", len(netlist)
 
 data_grid = grid.grid
 
+img_no = 0
 nets_unsorted = []          # List with start and end points of lines
 index_path_dict = {}        # Dictionary with net-index as key and the path as value
 conn_per_chip = {}          # Dictionary with the number of
@@ -23,6 +24,7 @@ not_used_chips = []
 not_layed_paths = []
 path_lay_amount = {}
 visualise_dict = {}
+netlist_sorted = []
 
 
 def initialise():
@@ -106,19 +108,16 @@ def getNeighbourChips(point):
     return neighbour_chips
 
 
-def minPathLength(points):
+def aStar(point1, point2, line_val, mode="no_intersections", chip_neighbour="keep_free"):
     """
-    Calculates the minimum path length of the route 'points'
-    points = list containing one start and end point
+    mode: to allow intersections or not (it will find a path with the least amount of intersections)
+    chip_neighbour: to ignore or keep free the neighbours of chips that are not the end or begin point
+    return: a path if one is found, an empty list if nothing is found (only possible in mode 'no_intersection')
     """
-    return abs(points[0][0] - points[1][0]) + abs(points[0][1] - points[1][1]) + abs(points[0][2] - points[1][2])
-
-
-def aStar(point1, point2, line_val, mode="no_intersections"):
     global conn_free_per_chip
     queue = []  # (f, g, h, point, path_to_point, conn_free_per_chip), point = (x, y, z)
     g = 0
-    h = minPathLength((point1, point2))
+    h = grid.minPathLength((point1, point2))
     f = g + h
     visited_points = []
     heappush(queue, (f, g, h, point1, [point1], conn_free_per_chip))
@@ -137,7 +136,7 @@ def aStar(point1, point2, line_val, mode="no_intersections"):
                 conn_free_per_chip = q[5]
                 return q[4] + [successor]
             g = q[1] + 1
-            h = minPathLength((successor, point2))
+            h = grid.minPathLength((successor, point2))
             f = g + h
             if mode == "with_intersections" and grid.isOccupied(successor):
                 if grid.getPointOccupation(successor) != -2:
@@ -145,19 +144,22 @@ def aStar(point1, point2, line_val, mode="no_intersections"):
                     f = g + h
             if mode == "no_intersections" and grid.isOccupied(successor):
                 continue
-            if successor in chips_neighbours:                # Paths are allowed to have a path next to a chip
-                valid = True                                 # which isn't the start or end points
-                for chip in getNeighbourChips(successor):    # BUT: only when there are unused spots available for that
-                    if conn_free_per_chip[chip] <= 0:        # particular chip; chips don't always use their maximum
-                        valid = False                        # available free spots
-                        break                                #
-                    else:                                    #
-                        conn_free_copy = copy.deepcopy(conn_free_per_chip)
-                        conn_free_copy[chip] -= 1            #
-                        g += 50                              # Avoid laying a line next to a chip, but it is possible
-                        f = g + h                            # Therefore a penalty of 50 is given
-                if not valid:                                #
-                    continue                                 #
+            if chip_neighbour == "keep_free":
+                if successor in chips_neighbours:                # Paths are allowed to have a path next to a chip
+                    valid = True                                 # which isn't the start or end points
+                    for chip in getNeighbourChips(successor):    # BUT: only when there are unused spots available for
+                        if conn_free_per_chip[chip] <= 0:        # that particular chip; chips don't always use their
+                            valid = False                        # maximum available free spots
+                            break                                #
+                        else:                                    #
+                            conn_free_copy = copy.deepcopy(conn_free_per_chip)
+                            conn_free_copy[chip] -= 1            #
+                            g += 50                              # Avoid laying a line next to a chip, but its possible
+                            f = g + h                            # Therefore a penalty of 50 is given
+                    if not valid:                                #
+                        continue                                 #
+            if chip_neighbour == "ignore":
+                pass
             item = (f, g, h, successor, q[4] + [successor], conn_free_copy)
             heappush(queue, item)
 
@@ -167,14 +169,14 @@ def aStar(point1, point2, line_val, mode="no_intersections"):
 
 
 def main():
+    global netlist_sorted, img_no, index_path_dict
+
+    print "### Starting A* ###"
     initialise()
-    img_no = 0
+    netlist_sorted = sorted(nets_unsorted, key=grid.minPathLength)  # Sort nets_unsorted by minimum length
     for chip in conn_per_chip.keys():
         free = len(findNeighbours(chip)) - conn_per_chip[chip]
         conn_free_per_chip[chip] = free
-
-    netlist_sorted = sorted(nets_unsorted, key=minPathLength)  # Sort nets_unsorted by minimum length
-
     for index, net in enumerate(netlist_sorted):
         path = aStar(net[0], net[1], index)
         if path != []:
@@ -185,35 +187,119 @@ def main():
             grid.setOccupation(path, index)
 
     print "No of paths layed:", len(netlist) - len(not_layed_paths)
+
+    #################################################################################################
+    ### All paths that could have been placed are placed, but some paths cannot be placed because ###
+    ### other paths are in the way. The next section cuts away blocking paths.                    ###
+    #################################################################################################
+
     print "\n### Starting A* with intersections ###"
-    max_iteration = 500
+    total_length = layRemainingPaths(index_path_dict, chip_neighbour="keep_free")
+    print "Total length:", total_length
+
+    ########################################################
+    ### At this point all paths should have been placed  ###
+    ### Time for hillclimber to optimize path length     ###
+    ########################################################
+
+    print "\n### Starting Hillclimber method ###"
+    best_index_path_dict = index_path_dict.copy()
+    best_total_length = total_length
+
+    iteration = 0
+    for i in range(2000):
+        #print "Iteration:", iteration
+        iteration += 1
+        print "Iteration:", iteration
+        if best_index_path_dict != index_path_dict:
+            raise StandardError
+        checkPathDict(index_path_dict, iteration)
+        for path in best_index_path_dict.values():
+            if path == []:
+                raise StandardError
+        if len(best_index_path_dict.values()) != 50:
+            raise StandardError
+        # Choose 3 different paths to be cut away
+        path_1 = random.choice(index_path_dict.keys())
+        path_2 = random.choice(index_path_dict.keys())
+        path_3 = random.choice(index_path_dict.keys())
+        while path_1 == path_2 or path_2 == path_3 or path_1 == path_3:
+            path_2 = random.choice(index_path_dict.keys())
+            path_3 = random.choice(index_path_dict.keys())
+        remove_paths = [path_1, path_2, path_3]
+        #print "Remove:", remove_paths
+        for path in remove_paths:
+            grid.clearOccupation(index_path_dict[path])
+            del index_path_dict[path]
+            not_layed_paths.append((path, netlist_sorted[path]))
+        index_path_dict_copy = index_path_dict.copy()
+        #new_total_length = layRemainingPaths(index_path_dict, chip_neighbour="ignore")
+        new_total_length = layRemainingPaths(index_path_dict_copy, max_iteration=10, chip_neighbour="keep_free")
+        if new_total_length == []:
+            index_path_dict = best_index_path_dict.copy()
+            grid.rebuildGrid(best_index_path_dict)
+            continue
+        index_path_dict = index_path_dict_copy.copy()
+        if new_total_length < best_total_length:
+            print "New Best length:", new_total_length
+            best_index_path_dict = index_path_dict.copy()
+            best_total_length = new_total_length
+        else:
+            index_path_dict = best_index_path_dict.copy()
+        grid.rebuildGrid(best_index_path_dict)
+
+    return best_index_path_dict.values()
+
+
+def layRemainingPaths(path_dict, max_iteration=500, chip_neighbour="keep_free"):
+    global img_no
     iteration = 0
     while not_layed_paths != []:
         iteration += 1
         if iteration == max_iteration:
+            print "Could not find solution"
             return []
-        print "Iteration", iteration
-        print "Paths layed:", len(netlist) - len(not_layed_paths)
+        #print "Iteration", iteration
+        #print "Paths layed:", len(netlist) - len(not_layed_paths)
         index, net = random.choice(not_layed_paths)
-        print "Path " + str(index) + ":", net
-        path = aStar(net[0], net[1], index, mode="with_intersections")
+        #print "Path " + str(index) + ":", net
+        path = aStar(net[0], net[1], index, mode="with_intersections", chip_neighbour=chip_neighbour)
         visualise_dict[index] = path
         intersections = grid.getOccupation(path)
-        print "Intersecting paths", intersections
+        #print "Intersecting paths", intersections
+        #print "Intersections:", intersections
         for intersection in intersections:
             path_lay_amount[intersection] += 1
             visualise_dict[intersection] = []
-            grid.clearOccupation(index_path_dict[intersection])
-            del index_path_dict[intersection]
+            grid.clearOccupation(path_dict[intersection])
+            del path_dict[intersection]
             not_layed_paths.append((intersection, netlist_sorted[intersection]))
 
         not_layed_paths.remove((index, net))
         grid.setOccupation(path, index)
-        index_path_dict[index] = path
+        path_dict[index] = path
         #Visualization.run3DVisualisation(visualise_dict.values(), img_no)  # For making a movie
         img_no += 1
+    total_length = 0
+    for path in path_dict.values():
+        total_length += len(path) - 1
 
-    return index_path_dict.values()
+    return total_length
+
+
+def checkPathDict(path_dict, iteration):
+    points_occupied = []
+    paths = path_dict.keys()
+    for path in paths:
+        for point in path_dict[path]:
+            if point in points_occupied and point not in chips:
+                print "Point", point
+                print "Path no", path
+                print "Iteration", iteration
+                Visualization.runVisualization(path_dict.values())
+                raise StandardError
+            else:
+                points_occupied.append(point)
 
 
 def runMain():
@@ -260,6 +346,6 @@ def runAndSaveMultiple(run_amount):
 
 
 if __name__ == "__main__":
-    #runMain()
-    # If you comment out runMain() you can do some testing here
-    runAndSaveMultiple(100)
+    runMain()
+    #runAndSaveMultiple(100)
+    # If you comment out runMain() and/or runAndSaveMultiple() you can do some testing here
