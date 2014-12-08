@@ -61,7 +61,7 @@ def rebuildGrid(path_dict):
     global grid
     grid = clearGrid()
     for path_val in path_dict.keys():
-        for point in path_dict[path_val]:
+        for point in path_dict[path_val][1:-1]:
             grid[point[0]][point[1]][point[2]] = path_val
 
 def minPathLength(points):

@@ -252,3 +252,19 @@ def run3DVisualisation(paths, file_name="untitled"):
     plt.show()
     #plt.savefig(str(file_name) + ".png", format="png")
     plt.close()
+
+
+def hillclimberVisualisation(data):
+    """
+    Data: [[x1, x2, x3, x4, ..], [y1, y2, y3, y4, ..]]
+    """
+    fig = plt.figure()
+    axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    x = data[0]
+    y = data[1]
+    axes.plot(x, y, 'r')
+    axes.set_ylim(min(y) - (max(y)-min(y))*0.1, max(y) + (max(y)-min(y))*0.1)
+    axes.set_xlabel('Iteration')
+    axes.set_ylabel('Total path length')
+    axes.set_title('Hillclimber')
+    plt.show()

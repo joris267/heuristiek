@@ -7,7 +7,7 @@ import grid_copy as grid
 from heapq import *
 import Visualization
 
-seed = 2  # 34 is best so far
+seed = 13
 random.seed(str(seed))
 chips = data.chips
 netlist = data.netlist
@@ -25,6 +25,7 @@ not_layed_paths = []
 path_lay_amount = {}
 visualise_dict = {}
 netlist_sorted = []
+hillclimber_visualisation = [[], []]
 
 
 def initialise():
@@ -169,9 +170,9 @@ def aStar(point1, point2, line_val, mode="no_intersections", chip_neighbour="kee
 
 
 def main():
-    global netlist_sorted, img_no, index_path_dict
+    global netlist_sorted, img_no, index_path_dict, not_layed_paths
 
-    print "### Starting A* ###"
+    print "\n### Starting A* ###"
     initialise()
     netlist_sorted = sorted(nets_unsorted, key=grid.minPathLength)  # Sort nets_unsorted by minimum length
     for chip in conn_per_chip.keys():
@@ -205,12 +206,15 @@ def main():
     print "\n### Starting Hillclimber method ###"
     best_index_path_dict = index_path_dict.copy()
     best_total_length = total_length
-
+    iterations_not_changed = 0
     iteration = 0
-    for i in range(2000):
-        #print "Iteration:", iteration
+    while iterations_not_changed < 750:
+        hillclimber_visualisation[0].append(iteration)
+        hillclimber_visualisation[1].append(best_total_length)
         iteration += 1
-        print "Iteration:", iteration
+        iterations_not_changed += 1
+        if iteration % 250 == 0:
+            print "Iteration:", iteration
         if best_index_path_dict != index_path_dict:
             raise StandardError
         checkPathDict(index_path_dict, iteration)
@@ -234,20 +238,23 @@ def main():
             not_layed_paths.append((path, netlist_sorted[path]))
         index_path_dict_copy = index_path_dict.copy()
         #new_total_length = layRemainingPaths(index_path_dict, chip_neighbour="ignore")
-        new_total_length = layRemainingPaths(index_path_dict_copy, max_iteration=10, chip_neighbour="keep_free")
+        new_total_length = layRemainingPaths(index_path_dict_copy, max_iteration=50, chip_neighbour="keep_free")
         if new_total_length == []:
+            not_layed_paths = []
             index_path_dict = best_index_path_dict.copy()
             grid.rebuildGrid(best_index_path_dict)
             continue
         index_path_dict = index_path_dict_copy.copy()
         if new_total_length < best_total_length:
             print "New Best length:", new_total_length
+            iterations_not_changed = 0
             best_index_path_dict = index_path_dict.copy()
             best_total_length = new_total_length
         else:
             index_path_dict = best_index_path_dict.copy()
         grid.rebuildGrid(best_index_path_dict)
 
+    #Visualization.hillclimberVisualisation(hillclimber_visualisation)
     return best_index_path_dict.values()
 
 
@@ -323,12 +330,15 @@ def runMain():
 
 
 def runAndSaveMultiple(run_amount):
-    for i in range(run_amount):
+    start = time.clock()
+    for i in range(20, run_amount):
         grid.clearGrid()
         seed = i
         random.seed(str(seed))
 
-        global nets_unsorted, index_path_dict, conn_per_chip, conn_free_per_chip, not_used_chips, not_layed_paths, path_lay_amount
+        global img_no, nets_unsorted, index_path_dict, conn_per_chip, conn_free_per_chip, not_used_chips, \
+            not_layed_paths, path_lay_amount, visualise_dict, netlist_sorted
+        img_no = 0
         nets_unsorted = []          # List with start and end points of lines
         index_path_dict = {}        # Dictionary with net-index as key and the path as value
         conn_per_chip = {}          # Dictionary with the number of
@@ -336,6 +346,8 @@ def runAndSaveMultiple(run_amount):
         not_used_chips = []
         not_layed_paths = []
         path_lay_amount = {}
+        visualise_dict = {}
+        netlist_sorted = []
 
         paths = main()
         if paths != []:
@@ -343,9 +355,10 @@ def runAndSaveMultiple(run_amount):
             for path in paths:
                 total_length += len(path) - 1
             path_saver.saveToFile(paths, total_length, seed)
+    print "Calculated in:", time.clock() - start
 
 
 if __name__ == "__main__":
     runMain()
-    #runAndSaveMultiple(100)
+    #runAndSaveMultiple(60)
     # If you comment out runMain() and/or runAndSaveMultiple() you can do some testing here
