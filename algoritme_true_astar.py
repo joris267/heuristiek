@@ -6,6 +6,7 @@ import data
 import grid_copy as grid
 from heapq import *
 import Visualization
+import numpy
 
 seed = 13
 random.seed(str(seed))
@@ -208,7 +209,8 @@ def main():
     best_total_length = total_length
     iterations_not_changed = 0
     iteration = 0
-    while iterations_not_changed < 750:
+    temperature = 1.
+    while iterations_not_changed < 1500:
         hillclimber_visualisation[0].append(iteration)
         hillclimber_visualisation[1].append(best_total_length)
         iteration += 1
@@ -245,16 +247,39 @@ def main():
             grid.rebuildGrid(best_index_path_dict)
             continue
         index_path_dict = index_path_dict_copy.copy()
-        if new_total_length < best_total_length:
-            print "New Best length:", new_total_length
-            iterations_not_changed = 0
+
+        ### Simulated Annealing ### Uncomment for hillclimber
+        if 1000 < iteration < 5000:             # Cool down between 1000 and 5000 iterations
+            temperature = 1. - iteration/5000.
+        elif iteration >= 5000:                 # Don't divide by 0 and temperature has to remain positive
+            temperature = 0.0000001             # This is practically a hillclimber from now on
+        difference = new_total_length - best_total_length
+        if numpy.exp(-(0.15/temperature) * difference) > random.random():
+            # Path is accepted
+            if new_total_length != best_total_length:
+                print "New length:", new_total_length
+                iterations_not_changed = 0
             best_index_path_dict = index_path_dict.copy()
             best_total_length = new_total_length
         else:
+            # Path is not accepted
             index_path_dict = best_index_path_dict.copy()
+        ### \Simulated Annealing ###
+
+        ### Hillclimber ### Uncomment for simulated annealing
+        #if new_total_length < best_total_length:
+        #     print "New Best length:", new_total_length
+        #     iterations_not_changed = 0
+        #     best_index_path_dict = index_path_dict.copy()
+        #     best_total_length = new_total_length
+        #else:
+        #     index_path_dict = best_index_path_dict.copy()
+        ### \Hillclimber ###
+
         grid.rebuildGrid(best_index_path_dict)
 
-    #Visualization.hillclimberVisualisation(hillclimber_visualisation)
+
+    Visualization.hillclimberVisualisation(hillclimber_visualisation)
     return best_index_path_dict.values()
 
 
@@ -266,15 +291,11 @@ def layRemainingPaths(path_dict, max_iteration=500, chip_neighbour="keep_free"):
         if iteration == max_iteration:
             print "Could not find solution"
             return []
-        #print "Iteration", iteration
-        #print "Paths layed:", len(netlist) - len(not_layed_paths)
         index, net = random.choice(not_layed_paths)
         #print "Path " + str(index) + ":", net
         path = aStar(net[0], net[1], index, mode="with_intersections", chip_neighbour=chip_neighbour)
         visualise_dict[index] = path
         intersections = grid.getOccupation(path)
-        #print "Intersecting paths", intersections
-        #print "Intersections:", intersections
         for intersection in intersections:
             path_lay_amount[intersection] += 1
             visualise_dict[intersection] = []
@@ -331,7 +352,7 @@ def runMain():
 
 def runAndSaveMultiple(run_amount):
     start = time.clock()
-    for i in range(20, run_amount):
+    for i in range(run_amount):
         grid.clearGrid()
         seed = i
         random.seed(str(seed))
@@ -360,5 +381,5 @@ def runAndSaveMultiple(run_amount):
 
 if __name__ == "__main__":
     runMain()
-    #runAndSaveMultiple(60)
+    #runAndSaveMultiple(20)
     # If you comment out runMain() and/or runAndSaveMultiple() you can do some testing here

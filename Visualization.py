@@ -264,7 +264,8 @@ def hillclimberVisualisation(data):
     y = data[1]
     axes.plot(x, y, 'r')
     axes.set_ylim(min(y) - (max(y)-min(y))*0.1, max(y) + (max(y)-min(y))*0.1)
+    axes.set_xlim(x[0], x[-1])
     axes.set_xlabel('Iteration')
     axes.set_ylabel('Total path length')
-    axes.set_title('Hillclimber')
+    axes.set_title('Simulated Annealing')
     plt.show()
