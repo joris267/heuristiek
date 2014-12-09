@@ -234,10 +234,15 @@ def run3DVisualisation(paths, file_name="untitled"):
         x = []
         y = []
         z = []
-        for point in path:
-            x.append(point[0])
-            y.append(point[1])
-            z.append(point[2])
+        try:
+            for point in path:
+                x.append(point[0])
+                y.append(point[1])
+                z.append(point[2])
+        except:
+            print point
+            print path
+            print paths
         ax.plot(x, y, z, markersize=20)
 
     ax.set_xlim(0, X_SIZE)

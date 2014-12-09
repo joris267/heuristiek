@@ -41,6 +41,47 @@ def findShortestPath(start, end):
     return path_points
 
 
+def calculateNumberOccupiedPoints(grid, chips):
+    total = 0
+    for x in grid:
+        for y in x:
+            for z in y:
+                if not z:
+                    total += 1
+    return total
+
+
+
+def calculateNumberPathOccupiedPoints(path_grid):
+    total = 0
+    for x in path_grid:
+        for y in x:
+            for z in y:
+                if z > -1:
+                    total += 1
+
+    return total
+
+def pathGridNormalGridOccupation(grid, path_grid):
+    for x in range(len(path_grid)):
+        for y in range(len(path_grid[0])):
+            for z in range(len(path_grid[0][0])):
+                # if (x,y,z) == (16, 6, 0):
+                #     print "heh"
+                #     print path_grid[x][y][z]
+                #     print grid[x][y][z]
+                if path_grid[x][y][z] > -1:
+                    if grid[x][y][z]:  # pathgrid is bezet met path maar grid if leeg
+                        print "occupation klopt niet bij punt:", (x,y,z)
+                        return False
+    return True
+
+def totalOccupiedPoints(layed_paths):
+    total = 0
+    for path in layed_paths:
+        for point in path:
+            total += 1
+    return total
 
 def calculateWireLenght(path_list):
     """

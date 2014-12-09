@@ -6,9 +6,9 @@ import random
 import algoritme_j as algoritme
 
 X_SIZE = data.X_SIZE
-Y_SIZE = data.Y_SIZE
+Y_SIZE = data.Y_SIZE_2
 Z_SIZE = data.Z_SIZE
-chips = data.chips
+chips = data.chips_2
 netlist = data.netlist
 
 
@@ -33,6 +33,9 @@ def createPathGrid():
     for chip in chips:
         path_grid[chip[0]][chip[1]][chip[2]] = -2
     return path_grid
+
+
+
 
 def isOccupied(point):
     """
