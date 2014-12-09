@@ -39,6 +39,6 @@ def saveToFile(paths, path_length, seed):
     datum = time.strftime("%d-%m-%Y")
     folder_name = _create_folder("Oplossingen Rick", datum)
 
-    file_name = "l" + str(path_length) + "_seed_" + str(seed)+ "_" + str(len(paths))
+    file_name = "sim" + str(path_length) + "_seed_" + str(seed)+ "_" + str(len(paths))
     to_write = "paths =", paths
     _write_file(folder_name, file_name, to_write)

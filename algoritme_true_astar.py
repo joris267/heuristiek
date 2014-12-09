@@ -8,10 +8,10 @@ from heapq import *
 import Visualization
 import numpy
 
-seed = 13
+seed = 10
 random.seed(str(seed))
 chips = data.chips
-netlist = data.netlist
+netlist = data.netlist_1
 print "Netlist size:", len(netlist)
 
 data_grid = grid.grid
@@ -27,6 +27,7 @@ path_lay_amount = {}
 visualise_dict = {}
 netlist_sorted = []
 hillclimber_visualisation = [[], []]
+
 
 
 def initialise():
@@ -52,11 +53,9 @@ def initialise():
         for chip in chips:
             if chip not in conn_per_chip.keys():
                 not_used_chips.append(chip)
-        for chip in not_used_chips:
-            chips.remove(chip)
         print "Not used chips:", not_used_chips
         print "Delete chip from chiplist..."
-        if len(conn_per_chip.keys()) != len(chips):
+        if len(conn_per_chip.keys()) != len(chips) - len(not_used_chips):
             raise StandardError
 
 
@@ -105,7 +104,7 @@ def getNeighbourChips(point):
     """
     neighbour_chips = []
     for neighbour in findNeighbours(point):
-        if neighbour in chips:
+        if neighbour in chips and neighbour not in not_used_chips:
             neighbour_chips.append(neighbour)
     return neighbour_chips
 
@@ -223,7 +222,7 @@ def main():
         for path in best_index_path_dict.values():
             if path == []:
                 raise StandardError
-        if len(best_index_path_dict.values()) != 50:
+        if len(best_index_path_dict.values()) != len(netlist):
             raise StandardError
         # Choose 3 different paths to be cut away
         path_1 = random.choice(index_path_dict.keys())
@@ -278,16 +277,16 @@ def main():
 
         grid.rebuildGrid(best_index_path_dict)
 
-
-    Visualization.hillclimberVisualisation(hillclimber_visualisation)
     return best_index_path_dict.values()
 
 
-def layRemainingPaths(path_dict, max_iteration=500, chip_neighbour="keep_free"):
+def layRemainingPaths(path_dict, max_iteration=5000, chip_neighbour="keep_free"):
     global img_no
     iteration = 0
     while not_layed_paths != []:
         iteration += 1
+       #print "Iteration:", iteration
+        #print "Paths placed:", len(netlist) - len(not_layed_paths)
         if iteration == max_iteration:
             print "Could not find solution"
             return []
@@ -351,14 +350,15 @@ def runMain():
 
 
 def runAndSaveMultiple(run_amount):
-    start = time.clock()
+
     for i in range(run_amount):
+        start = time.clock()
         grid.clearGrid()
         seed = i
         random.seed(str(seed))
 
         global img_no, nets_unsorted, index_path_dict, conn_per_chip, conn_free_per_chip, not_used_chips, \
-            not_layed_paths, path_lay_amount, visualise_dict, netlist_sorted
+            not_layed_paths, path_lay_amount, visualise_dict, netlist_sorted, hillclimber_visualisation
         img_no = 0
         nets_unsorted = []          # List with start and end points of lines
         index_path_dict = {}        # Dictionary with net-index as key and the path as value
@@ -369,6 +369,7 @@ def runAndSaveMultiple(run_amount):
         path_lay_amount = {}
         visualise_dict = {}
         netlist_sorted = []
+        hillclimber_visualisation = [[], []]
 
         paths = main()
         if paths != []:
@@ -376,10 +377,11 @@ def runAndSaveMultiple(run_amount):
             for path in paths:
                 total_length += len(path) - 1
             path_saver.saveToFile(paths, total_length, seed)
-    print "Calculated in:", time.clock() - start
+        Visualization.hillclimberVisualisation(hillclimber_visualisation, seed)
+        print "Calculated in:", time.clock() - start
 
 
 if __name__ == "__main__":
-    runMain()
-    #runAndSaveMultiple(20)
+    #runMain()
+    runAndSaveMultiple(1000)
     # If you comment out runMain() and/or runAndSaveMultiple() you can do some testing here

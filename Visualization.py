@@ -225,7 +225,7 @@ def run3DVisualisation(paths, file_name="untitled"):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    for chip in data.chips:
+    for chip in chips:
         chip_x = chip[0]
         chip_y = chip[1]
         ax.scatter(chip_x, chip_y, s=30, c='r')
@@ -259,7 +259,7 @@ def run3DVisualisation(paths, file_name="untitled"):
     plt.close()
 
 
-def hillclimberVisualisation(data):
+def hillclimberVisualisation(data, file_name="untitled"):
     """
     Data: [[x1, x2, x3, x4, ..], [y1, y2, y3, y4, ..]]
     """
@@ -273,4 +273,6 @@ def hillclimberVisualisation(data):
     axes.set_xlabel('Iteration')
     axes.set_ylabel('Total path length')
     axes.set_title('Simulated Annealing')
-    plt.show()
+    plt.savefig(str(file_name) + ".png", format="png")
+    #plt.show()
+    plt.close()

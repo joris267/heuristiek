@@ -6,6 +6,7 @@ import numpy
 X_SIZE = data.X_SIZE
 Y_SIZE = data.Y_SIZE
 Z_SIZE = data.Z_SIZE
+chips = data.chips
 
 FILL_VALUE = -1
 CHIP_VALUE = -2
@@ -17,7 +18,7 @@ def createGrid():
     Only used inner class. For reference to the grid object use grid.grid
     """
     g = numpy.full(shape=(X_SIZE, Y_SIZE, Z_SIZE), fill_value=FILL_VALUE, dtype=type(FILL_VALUE))
-    for c in data.chips:
+    for c in chips:
         g[c[0]][c[1]][c[2]] = CHIP_VALUE
     return g
 
